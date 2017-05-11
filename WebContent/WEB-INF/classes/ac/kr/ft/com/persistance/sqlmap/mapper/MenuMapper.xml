@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- JAVA와 연결할 Mapper 파일 설정 -->
+<!-- 기존 CtrSqlMap과 같음 -->
+  
+<mapper namespace="ac.kr.ft.com.persistance.mapper.MenuMapper">
+	
+	<select id="getMENUList" resultType="MenuInfoDTO">
+		SELECT 
+			MI.MENU_SEQ,
+			MI.MENU_NAME,
+			MI.MENU_INT,
+			MI.PRICE,
+			(SELECT A.FILE_PATH ||'/'|| A.FILE_SAVE_NAME FROM FILE_INFO A WHERE A.FILE_GRP = MI.FILE_GRP) AS FILE_NAME,
+			MI.COUNTRY_INFO,
+			MI.REG_USER_NO,
+			TO_CHAR(MI.REG_DT, 'YYYYMMDD'),
+			MI.CHG_USER_NO,
+			TO_CHAR(MI.CHG_DT, 'YYYYMMDD')	
+		  FROM MENU_INFO MI ORDER BY REG_DT
+	</select>
+
+	<select resultType="MenuInfoDTO" id="getMENUDetail" parameterType="MenuInfoDTO">
+	
+		SELECT 
+			MI.MENU_SEQ,
+			MI.MENU_NAME,
+			U.USER_NO,
+			MI.MENU_INT,
+			MI.PRICE,
+			(SELECT A.FILE_PATH ||'/'|| A.FILE_SAVE_NAME FROM FILE_INFO A WHERE A.FILE_GRP = MI.FILE_GRP) AS FILE_NAME,
+			MI.COUNTRY_INFO,
+			MI.REG_USER_NO,
+			TO_CHAR(MI.REG_DT, 'YYYYMMDD'),
+			MI.CHG_USER_NO,
+			TO_CHAR(MI.CHG_DT, 'YYYYMMDD')	
+		  FROM MENU_INFO MI,USER_INFO U
+		 WHERE MI.USER_NO = U.USER_NO 
+		 AND MENU_SEQ = #{menu_seq}
+		 
+		 
+	</select>
+	
+	<insert id="createMENUInfo" parameterType="MenuInfoDTO"> 
+	INSERT INTO MENU_INFO (
+		MENU_SEQ, MENU_NAME, MENU_INT, PRICE, 
+		FILE_GRP, COUNTRY_INFO,
+		REG_USER_NO,REG_DT,USER_NO
+	) 
+	VALUES(
+		SEQ_MENU_SEQ.NEXTVAL, #{menu_name}, #{menu_int}, #{price}, 
+		#{file_grp}, #{country_info}, 
+		#{reg_user_no},SYSDATE,#{user_no}
+	) 
+	</insert>
+
+	
+	<update id="updateMENUInfo" parameterType="MenuInfoDTO">
+		UPDATE MENU_INFO SET 
+			MENU_NAME=#{menu_name}, 
+			MENU_INT=#{menu_int}, 
+			PRICE=#{price},
+			FILE_GRP=#{file_grp}, 
+			COUNTRY_INFO=#{country_info},
+			CHG_USER_NO=#{chg_user_no},
+			CHG_DT=SYSDATE 
+		WHERE MENU_SEQ = #{menu_seq} 
+	</update>
+
+	<delete id="deleteMENUInfo" parameterType="MenuInfoDTO"> 
+		DELETE FROM MENU_INFO 
+		WHERE MENU_SEQ = #{menu_seq}
+	</delete>
+	
+	<!-- 체크된 항목 삭제 -->
+	<delete id="deleteAllCheckList" parameterType="MenuInfoDTO"> 
+		DELETE FROM MENU_INFO 
+		WHERE MENU_SEQ IN 
+		
+		<foreach item="chkMenu" index="index" collection="allCheckSeq"
+		      open="(" separator="," close=")">
+		        #{chkMenu}
+		</foreach>		
+		
+	</delete>
+	
+		<delete id="deleteAllCheckListComment" parameterType="MenuInfoDTO">
+		DELETE FROM COMMENT_MENU
+		WHERE MENU_SEQ IN
+		<foreach close=")" separator="," open="(" collection="allCheckSeq"
+			index="index" item="item"> #{item}
+		</foreach>
+
+	</delete>
+<!--  댓글리스트 가져오기 -->
+		<select resultType="MenuComDTO" id="getMenuComList" parameterType="MenuComDTO"> 
+		<![CDATA[
+			SELECT
+			 CE.MENU_SEQ,
+			 CE.COM_SEQ,
+			 CE.CONTENTS,
+			 CE.USER_NO,
+			 TO_CHAR(CE.REG_DT, 'YYYY.MM.DD') AS REG_DT,
+			 CE.REG_DT AS ORD_REG_DT,
+			 UI.USER_NAME
+		FROM COMMENT_MENU CE, USER_INFO UI
+		WHERE CE.USER_NO = UI.USER_NO
+		  AND CE.MENU_SEQ = #{menu_seq}
+		ORDER BY ORD_REG_DT DESC
+	 	]]>
+	 	</select>
+		<!-- (사업자)댓글 리스트 수 가져오기 -->
+	<select id="getMenuComListCnt" resultType="MenuComDTO" parameterType="MenuComDTO">
+		SELECT
+			COUNT(MENU_SEQ) AS CNT
+		 FROM COMMENT_MENU
+		WHERE MENU_SEQ = #{menu_seq}
+	</select>
+<!-- 댓글 과 게시판글 함께 삭제 -->
+
+
+	<delete id="deleteCommentInfo" parameterType="MenuInfoDTO"> 
+		DELETE FROM 
+		COMMENT_MENU 
+		WHERE MENU_SEQ=#{menu_seq} 
+	</delete>
+
+<!--댓글 등록 -->
+
+
+<insert id="createComment" parameterType="MenuComDTO"> 
+		INSERT INTO
+		COMMENT_MENU(
+		 MENU_SEQ,
+		  COM_SEQ, 
+		  CONTENTS,
+		  USER_NO,
+		  REG_USER_NO,
+		  REG_DT,
+		  CHG_USER_NO,
+		  CHG_DT 
+		  ) 
+		VALUES ( 
+		 #{menu_seq},
+		 (SELECT NVl(MAX(A.COM_SEQ), 0)+1 FROM COMMENT_MENU A WHERE A.MENU_SEQ =
+		 #{menu_seq}),
+		 #{contents},
+		 #{reg_user_no},
+		 #{reg_user_no},
+		 SYSDATE,
+		 #{reg_user_no},
+		 SYSDATE 
+		 ) 
+		  </insert>
+
+<!-- 댓글 삭제 -->
+
+
+<delete id="deleteComment" parameterType="MenuComDTO"> 
+	DELETE FROM 
+	COMMENT_MENU 
+	WHERE MENU_SEQ=#{menu_seq} 
+	AND COM_SEQ=#{com_seq}
+	 </delete>
+
+<!-- 댓글 수정 -->
+
+
+<update id="updateComment" parameterType="MenuComDTO"> 
+UPDATE COMMENT_MENU 
+ SET 
+ USER_NO=#{user_no},
+ CONTENTS=#{contents},
+ CHG_USER_NO=#{user_no}, 
+ CHG_DT=SYSDATE
+ WHERE MENU_SEQ =#{menu_seq}
+ AND COM_SEQ=#{com_seq} 
+ </update>
+
+<!-- 댓글 번호 증가 -->
+
+
+<update id="updatecomUppder" parameterType="MenuComDTO">
+ UPDATE COMMENT_MENU 
+ SET
+ COM_SEQ=COM_SEQ+1
+ WHERE MENU_SEQ=#{menu_seq} </update>
+ 	
+ 	
+ 	<!-- 
+	#############################################################################
+	#							사업자 쿼리 시작									#
+	#############################################################################
+	 -->
+
+   <!-- (사업자)댓글 리스트 가져오기 -->
+   <select id="getBusiCommentList" resultType="MenuComDTO" parameterType="MenuComDTO">    
+   <![CDATA[
+     
+    
+    SELECT *
+     FROM (
+           
+      SELECT 
+         ROWNUM AS RNUM, 
+         PAGETABLE.*
+         FROM (
+            SELECT
+               CE.MENU_SEQ,
+               CE.COM_SEQ,
+               CE.CONTENTS,
+               CE.USER_NO,
+               TO_CHAR(CE.REG_DT, 'YYYY.MM.DD hh24:mi:ss') AS REG_DT,
+               CE.REG_DT AS ORD_REG_DT,
+               UI.USER_NAME
+             FROM COMMENT_MENU CE, USER_INFO UI
+            WHERE CE.USER_NO = UI.USER_NO
+              AND CE.MENU_SEQ = #{menu_seq}
+            ORDER BY ORD_REG_DT DESC
+            ) PAGETABLE
+         WHERE ROWNUM < #{end_page_size}
+      )
+   WHERE RNUM >= #{start_page_size}     
+   
+  ]]>
+   </select>
+
+	<!-- (사업자)댓글 리스트 수 가져오기 -->
+	<select id="getBusiCommentListCnt" resultType="MenuComDTO" parameterType="MenuComDTO">
+		SELECT
+			COUNT(MENU_SEQ) AS CNT
+		 FROM COMMENT_MENU
+		WHERE MENU_SEQ = #{menu_seq}
+	</select>
+
+	<!-- 
+	#############################################################################
+	#							사업자 쿼리 끝										#
+	#############################################################################
+	 -->
+ <!-- 
+	#############################################################################
+	#							사용자 쿼리 시작									#
+	#############################################################################
+	 -->
+
+   <!-- (사용자)댓글 리스트 가져오기 -->
+   <select id="getUserCommentList" resultType="MenuComDTO" parameterType="MenuComDTO">    
+   <![CDATA[
+     
+    
+    SELECT *
+     FROM (
+           
+      SELECT 
+         ROWNUM AS RNUM, 
+         PAGETABLE.*
+         FROM (
+            SELECT
+               CE.MENU_SEQ,
+               CE.COM_SEQ,
+               CE.CONTENTS,
+               CE.USER_NO,
+               TO_CHAR(CE.REG_DT, 'YYYY.MM.DD hh24:mi:ss') AS REG_DT,
+               CE.REG_DT AS ORD_REG_DT,
+               UI.USER_NAME
+             FROM COMMENT_MENU CE, USER_INFO UI
+            WHERE CE.USER_NO = UI.USER_NO
+              AND CE.MENU_SEQ = #{menu_seq}
+            ORDER BY ORD_REG_DT DESC
+            ) PAGETABLE
+         WHERE ROWNUM < #{end_page_size}
+      )
+   WHERE RNUM >= #{start_page_size}     
+   
+  ]]>
+   </select>
+
+	<!-- (사용자)댓글 리스트 수 가져오기 -->
+	<select id="getUserCommentListCnt" resultType="MenuComDTO" parameterType="MenuComDTO">
+		SELECT
+			COUNT(MENU_SEQ) AS CNT
+		 FROM COMMENT_MENU
+		WHERE MENU_SEQ = #{menu_seq}
+	</select>
+
+	<!-- 
+	#############################################################################
+	#							사용자 쿼리 끝										#
+	#############################################################################
+	 -->
+ 
+ 
+ 
+ 
+ 
+
+</mapper>
+
+
+
+		

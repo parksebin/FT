@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ac.kr.ft.com.persistance.mapper.NoticeMapper">
+
+	<select id="getNoticeList" resultType="NoticeDTO">
+		SELECT
+			MI.NOTICE_SEQ,
+			MI.TITLE,
+			MI.READ_CNT,
+			U.USER_NAME,
+			MI.REG_DT,
+			MI.CHG_DT,
+			(SELECT A.FILE_PATH 
+			||'/'||
+			A.FILE_SAVE_NAME FROM FILE_INFO A WHERE
+			A.FILE_GRP =
+			MI.FILE_GRP) AS
+			FILE_NAME
+		FROM NOTICE_INFO MI, USER_INFO U
+		WHERE MI.USER_NO = U.USER_NO
+		ORDER BY
+		 MI.REG_DT DESC
+	</select>
+
+	<select id="getNoticeDetail" resultType="NoticeDTO" parameterType="NoticeDTO">
+		SELECT
+			MI.NOTICE_SEQ,
+			MI.TITLE,
+			MI.CONTENTS,
+			MI.READ_CNT,
+			U.USER_NAME,
+			U.USER_NO,
+			MI.REG_USER_NO,
+			MI.REG_DT,
+			MI.CHG_USER_NO,
+			MI.CHG_DT,
+			(SELECT A.FILE_PATH ||'/'||
+			A.FILE_SAVE_NAME FROM FILE_INFO A WHERE
+			A.FILE_GRP = MI.FILE_GRP) AS
+			FILE_NAME
+		FROM NOTICE_INFO MI, USER_INFO U
+		WHERE 
+			MI.USER_NO = U.USER_NO
+			AND	NOTICE_SEQ= #{notice_seq}
+
+	</select>
+
+	<insert id="createNoticeInfo" parameterType="NoticeDTO">
+		INSERT INTO NOTICE_INFO(
+			NOTICE_SEQ,
+			TITLE,
+			CONTENTS,
+			READ_CNT,
+			USER_NO,
+			REG_USER_NO,
+			REG_DT,
+			FILE_GRP
+		)
+		VALUES(
+			SEQ_NOTICE_SEQ.NEXTVAL,
+			#{title},
+			#{contents},
+			0,
+			#{reg_user_no},
+			#{reg_user_no},
+			SYSDATE,
+			#{file_grp}
+		)
+
+	</insert>
+
+	<delete id="deleteAllCheckList" parameterType="NoticeDTO">
+		DELETE FROM NOTICE_INFO
+		WHERE NOTICE_SEQ IN
+		<foreach close=")" separator="," open="(" collection="allCheckSeq"
+			index="index" item="item"> #{item}
+		</foreach>
+
+	</delete>
+
+	<delete id="deleteAllCheckListComment" parameterType="NoticeDTO">
+		DELETE FROM COMMENT_NOTICE
+		WHERE NOTICE_SEQ IN
+		<foreach close=")" separator="," open="(" collection="allCheckSeq"
+			index="index" item="item"> #{item}
+		</foreach>
+
+	</delete>
+
+	<delete id="deleteNoticeInfo" parameterType="NoticeDTO">
+		DELETE FROM
+		NOTICE_INFO
+		WHERE NOTICE_SEQ = #{notice_seq}
+	</delete>
+
+
+	<update id="updateNoticeInfo" parameterType="NoticeDTO">
+		UPDATE NOTICE_INFO SET
+			TITLE=#{title},
+			CONTENTS=#{contents},
+			READ_CNT=READ_CNT+1,
+			CHG_USER_NO=#{chg_user_no},
+			CHG_DT=SYSDATE,
+			FILE_GRP=#{file_grp}
+		WHERE
+		NOTICE_SEQ =#{notice_seq}
+	</update>
+
+
+	<update id="updateCntUppder" parameterType="NoticeDTO">
+		UPDATE NOTICE_INFO SET
+		READ_CNT=READ_CNT+1
+		WHERE NOTICE_SEQ=#{notice_seq}
+	</update>
+
+	<!-- 댓글 리스트 가져오기 -->
+	<select id="getNoticeComList" resultType="NoticeComDTO" parameterType="NoticeComDTO">
+		
+		SELECT
+			CE.NOTICE_SEQ,
+			CE.COM_SEQ,
+			CE.CONTENTS,
+			CE.USER_NO,
+			TO_CHAR(CE.REG_DT, 'YYYY.MM.DD  hh24:mi:ss') AS REG_DT,
+			CE.REG_DT AS 
+			ORD_REG_DT,
+			UI.USER_NAME
+			FROM COMMENT_NOTICE CE, USER_INFO UI
+			WHERE
+			CE.USER_NO = UI.USER_NO
+		 	AND CE.NOTICE_SEQ = #{notice_seq}
+			ORDER BY ORD_REG_DT 
+			DESC
+	
+	</select>
+
+
+	<!-- (사업자)댓글 리스트 수 가져오기 -->
+	<select id="getNoticeComListCnt" resultType="NoticeComDTO" parameterType="NoticeComDTO">
+		SELECT
+			COUNT(NOTICE_SEQ) AS CNT
+		 FROM COMMENT_NOTICE
+		WHERE NOTICE_SEQ = #{notice_seq}
+	</select>
+
+
+	<!-- 댓글 과 게시판글 함께 삭제 -->
+	<delete id="deleteCommentInfo" parameterType="NoticeDTO">
+		DELETE FROM
+		COMMENT_NOTICE
+		WHERE NOTICE_SEQ=#{notice_seq}
+	</delete>
+
+
+	<!--댓글 등록 -->
+	<insert id="createComment" parameterType="NoticeComDTO">
+		INSERT INTO 
+		COMMENT_NOTICE(
+	
+			NOTICE_SEQ,
+			COM_SEQ,
+			CONTENTS,
+			USER_NO,
+			REG_USER_NO,
+			REG_DT
+		)
+		VALUES (
+			#{notice_seq},
+			(SELECT NVl(MAX(A.COM_SEQ), 0)+1 FROM COMMENT_NOTICE A WHERE A.NOTICE_SEQ = #{notice_seq}),
+			#{contents},
+			#{reg_user_no},
+			#{reg_user_no},
+			SYSDATE
+		)
+	</insert>
+
+
+	<!-- 댓글 삭제 -->
+	<delete id="deleteComment" parameterType="NoticeComDTO">
+		DELETE FROM
+		COMMENT_NOTICE
+		WHERE NOTICE_SEQ=#{notice_seq}
+		AND COM_SEQ=#{com_seq}
+	</delete>
+
+
+	<!-- 댓글 수정 -->
+	<update id="updateComment" parameterType="NoticeComDTO">
+		UPDATE COMMENT_NOTICE
+		SET
+			USER_NO=#{user_no},
+			CONTENTS=#{contents},
+			CHG_USER_NO=#{user_no},
+			CHG_DT=SYSDATE
+		WHERE NOTICE_SEQ=#{notice_seq}
+		AND COM_SEQ=#{com_seq}
+	</update>
+
+	<!-- 댓글 번호 증가 -->
+	<update id="updatecomUppder" parameterType="NoticeComDTO">
+		UPDATE COMMENT_NOTICE
+		SET
+			COM_SEQ=COM_SEQ+1
+		WHERE NOTICE_SEQ=#{notice_seq}
+
+	</update>
+
+	
+	<!-- 
+	#############################################################################
+	#							사업자 쿼리 시작									#
+	#############################################################################
+	 -->
+     
+     
+     <!-- (사업자)게시판 리스트 가져오기 -->
+	<select id="getBusiList" resultType="NoticeDTO" parameterType="NoticeDTO">
+	   <![CDATA[   
+	   	 
+		SELECT *
+  FROM (
+        SELECT ROWNUM AS RNUM, 
+       	       PAGETABLE.*
+          FROM (
+                SELECT
+		                   MI.NOTICE_SEQ,
+                       (
+                        SELECT COUNT(CONTENTS)
+                          FROM COMMENT_NOTICE C
+                         WHERE C.NOTICE_SEQ = MI.NOTICE_SEQ
+                         GROUP BY C.NOTICE_SEQ
+                       ) AS CNT,
+		                   MI.TITLE,
+		                   MI.READ_CNT,
+                       U.USER_NAME,
+		                   U.USER_NO,		    
+		                   MI.REG_DT,
+		                  (
+                       SELECT A.FILE_PATH ||'/'||
+		                          A.FILE_SAVE_NAME
+                         FROM FILE_INFO A
+                        WHERE A.FILE_GRP = MI.FILE_GRP
+                      ) AS FILE_NAME
+		              FROM NOTICE_INFO MI, USER_INFO U
+		             WHERE MI.USER_NO = U.USER_NO
+		              ]]>
+	<if test="searchBox == 'TITLE' and searchText != ''"> AND TITLE LIKE '%' || #{searchText} || '%' </if>
+	<if test="searchBox == 'CONTENTS' and searchText != ''"> AND CONTENTS LIKE '%' || #{searchText} || '%' </if>
+		             
+		              <![CDATA[   
+		             
+		             
+		             ORDER BY MI.REG_DT DESC
+			         ) PAGETABLE
+         WHERE ROWNUM < #{end_page}
+       )
+ WHERE RNUM >= #{start_page}
+			   	       			       
+	 ]]>
+		
+		</select>
+	
+	
+	
+	<!-- (사업자)게시물 리스트 수 가져오기 -->
+	
+	
+	<select id="getBusiListCnt" resultType="NoticeDTO" parameterType="NoticeDTO">
+		SELECT
+			COUNT(NOTICE_SEQ) AS CNT
+		FROM NOTICE_INFO
+	    <if test="searchBox == 'TITLE' and searchText != ''"> WHERE TITLE LIKE '%' || #{searchText} || '%' </if>
+		<if test="searchBox == 'CONTENTS' and searchText != ''"> WHERE CONTENTS LIKE '%' || #{searchText} || '%' </if>
+	    
+	</select>
+
+
+   <!-- (사업자)댓글 리스트 가져오기 -->
+   <select id="getBusiCommentList" resultType="NoticeComDTO" parameterType="NoticeComDTO">
+   <![CDATA[   
+   
+   SELECT *
+     FROM (
+           
+      SELECT 
+         ROWNUM AS RNUM, 
+         PAGETABLE.*
+         FROM (
+            SELECT
+               CE.NOTICE_SEQ,
+               CE.COM_SEQ,
+               CE.CONTENTS,
+               CE.USER_NO,
+               TO_CHAR(CE.REG_DT, 'YYYY.MM.DD hh24:mi:ss') AS REG_DT,
+               CE.REG_DT AS ORD_REG_DT,
+               UI.USER_NAME
+             FROM COMMENT_NOTICE CE, USER_INFO UI
+            WHERE CE.USER_NO = UI.USER_NO
+              AND CE.NOTICE_SEQ = #{notice_seq}
+            ORDER BY ORD_REG_DT DESC
+            ) PAGETABLE
+         WHERE ROWNUM < #{end_page_size}
+      )
+   WHERE RNUM >= #{start_page_size}      
+   
+   ]]>
+   </select>
+
+	<!-- (사업자)댓글 리스트 수 가져오기 -->
+	<select id="getBusiCommentListCnt" resultType="NoticeComDTO" parameterType="NoticeComDTO">
+		SELECT
+			COUNT(NOTICE_SEQ) AS CNT
+		 FROM COMMENT_NOTICE
+		WHERE 
+		NOTICE_SEQ = #{notice_seq}
+	</select>
+
+	<!-- 
+	#############################################################################
+	#							사업자 쿼리 끝										#
+	#############################################################################
+	 -->
+
+</mapper>

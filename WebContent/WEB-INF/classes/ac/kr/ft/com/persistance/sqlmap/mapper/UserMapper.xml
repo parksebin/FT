@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ac.kr.ft.com.persistance.mapper.UserMapper">
+	<select id="getUserList" resultType="UserDTO">
+		SELECT
+		USER_NO,
+		USER_ID,
+		USER_NAME,
+		PASSWORD,
+		EMAIL1,
+		EMAIL2,
+		TEL_1,
+		TEL_2,
+		TEL_3,
+		BIRTHDAY,
+		AUTH,
+		REG_USER_NO,
+		REG_DT,
+		CHG_USER_NO,
+		CHG_DT
+		FROM
+		USER_INFO
+	</select>
+
+	<select id="getUserNo" resultType="UserDTO">
+		SELECT
+		SEQ_USER_NO.NEXTVAL AS
+		USER_NO
+		FROM DUAL
+	</select>
+
+	<insert id="createUserInfo" parameterType="UserDTO">
+		INSERT INTO USER_INFO
+		(
+		USER_NO,
+		USER_ID,
+		USER_NAME,
+		PASSWORD,
+		CHECKPASSWORD,
+		EMAIL1,
+		EMAIL2,
+		TEL_1,
+		TEL_2,
+		TEL_3,
+		BIRTHDAY,
+		AUTH,
+		REG_USER_NO,
+		REG_DT,
+		CHG_USER_NO,
+		CHG_DT
+		)
+		VALUES
+		(
+		#{user_no},
+		#{user_id},
+		#{user_name},
+		#{password},
+		#{checkpassword},
+		#{email1},
+		#{email2},
+		#{tel_1},
+		#{tel_2},
+		#{tel_3},
+		#{birthday},
+		'U',
+		#{user_no},
+		SYSDATE,
+		#{user_no},
+		SYSDATE
+		)
+	</insert>
+
+	<select id="getUserDetail" resultType="UserDTO" parameterType="UserDTO">
+		SELECT
+		USER_NO,
+		USER_ID,
+		USER_NAME,
+		PASSWORD,
+		CHECKPASSWORD,
+		EMAIL1,
+		EMAIL2,
+		TEL_1,
+		TEL_2,
+		TEL_3,
+		BIRTHDAY,
+		REG_USER_NO,
+		REG_DT,
+		CHG_USER_NO,
+		CHG_DT,
+		MILEAGE
+		FROM
+		USER_INFO
+		WHERE
+		USER_NO = #{user_no}
+
+	</select>
+
+	<delete id="deleteUserInfo" parameterType="UserDTO">
+		DELETE FROM USER_INFO
+		WHERE
+		USER_NO= #{user_no}
+	</delete>
+	
+	<update id="updateUserInfo" parameterType="UserDTO">
+		UPDATE USER_INFO SET
+		USER_ID=#{user_id},
+		USER_NAME=#{user_name},
+		PASSWORD=#{password},
+		CHECKPASSWORD=#{checkpassword},
+		TEL_1=#{tel_1},
+		TEL_2=#{tel_2},
+		TEL_3=#{tel_3},
+		EMAIL1=#{email1},
+		EMAIL2=#{email2},
+		BIRTHDAY=#{birthday},
+		MILEAGE=#{mileage}
+		WHERE
+		USER_NO = #{user_no}
+	</update>
+
+	<select id="getLogin" parameterType="UserDTO" resultType="UserDTO">
+		SELECT
+		AUTH,
+		USER_NAME,
+		USER_NO
+		FROM
+		USER_INFO
+		WHERE
+		USER_ID = #{user_id}
+		AND
+		PASSWORD = #{password}
+		AND
+		AUTH = 'A'
+	</select>
+
+
+	<select id="getIdfind" parameterType="UserDTO" resultType="UserDTO">
+		SELECT
+		USER_ID,
+		EMAIL1,
+		EMAIL2,
+		USER_NAME
+		FROM
+		USER_INFO
+		WHERE
+		USER_NAME =
+		#{user_name}
+		AND
+		EMAIL1 = #{email1}
+		AND
+		EMAIL2 = #{email2}
+
+	</select>
+
+	<select id="getpwfind" parameterType="UserDTO" resultType="UserDTO">
+		SELECT
+		USER_NO,
+		USER_NAME,
+		EMAIL1,
+		EMAIL2,
+		USER_ID
+		FROM
+		USER_INFO
+		WHERE
+		USER_NAME = #{user_name}
+		AND
+		EMAIL1 = #{email1}
+		AND
+		EMAIL2 = #{email2}
+		AND
+		USER_ID = #{user_id}
+	</select>
+
+	<update id="getpwchange" parameterType="UserDTO">
+		UPDATE USER_INFO SET
+		PASSWORD = #{password},
+		CHECKPASSWORD = #{checkpassword}
+		WHERE
+		USER_NO =
+		#{user_no}
+
+	</update>
+
+	<select id="getUserDupInfo" resultType="UserDTO">
+		SELECT
+		DECODE(COUNT(USER_NO), 0, 'S', 'N')
+		AS
+		USER_EXISTS
+		FROM
+		USER_INFO
+		WHERE
+		USER_ID = #{user_id}
+	</select>
+
+	<delete id="deleteAllUserInfo" parameterType="UserDTO">
+		DELETE
+		FROM
+		USER_INFO
+		WHERE
+		USER_NO
+		IN
+		<foreach close=")" separator="," open="(" collection="allCheckSeq"
+			index="index" item="item"> #{item} </foreach>
+	</delete>
+
+	<select id="getappLogin" parameterType="UserDTO" resultType="UserDTO">
+		SELECT
+		AUTH,
+		USER_NAME,
+		USER_NO,
+		MILEAGE
+		FROM
+		USER_INFO
+		WHERE
+		USER_ID = #{user_id}
+		AND
+		PASSWORD = #{password}
+	</select>
+
+	<select id="getBusiList" resultType="UserDTO" parameterType="UserDTO">
+	   <![CDATA[   
+	   	 
+  	 SELECT *
+	     FROM (
+	           
+     	 SELECT 
+      	   ROWNUM AS RNUM, 
+       	  PAGETABLE.*
+       			  FROM (
+	
+		      SELECT
+		USER_NO,
+		USER_ID,
+		USER_NAME,
+		PASSWORD,
+		EMAIL1,
+		EMAIL2,
+		TEL_1,
+		TEL_2,
+		TEL_3,
+		BIRTHDAY,
+		AUTH,
+		REG_USER_NO,
+		REG_DT,
+		CHG_USER_NO,
+		CHG_DT
+		FROM
+		USER_INFO
+		]]>
+		<if test="searchBox == 'USER_ID' and searchText != ''">
+			WHERE USER_ID LIKE '%' || #{searchText} || '%'
+		</if>
+		<if test="searchBox == 'USER_NAME' and searchText != ''">
+			WHERE USER_NAME LIKE '%' || #{searchText} || '%'
+		</if>
+			  <![CDATA[        
+			        ) PAGETABLE
+         WHERE ROWNUM < #{end_page}
+      )
+   WHERE RNUM >= #{start_page}
+			   	       			       
+	 ]]>
+
+	</select>
+
+
+
+
+
+	<select id="getBusiListCnt" resultType="UserDTO" parameterType="UserDTO">
+		SELECT
+		COUNT(USER_NO) AS CNT
+		FROM USER_INFO
+		<if test="searchBox == 'USER_ID' and searchText != ''">
+			WHERE USER_ID LIKE '%' || #{searchText} || '%'
+		</if>
+		<if test="searchBox == 'USER_NAME' and searchText != ''">
+			WHERE USER_NAME LIKE '%' || #{searchText} || '%'
+		</if>
+	</select>
+
+
+</mapper>

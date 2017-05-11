@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- JAVA와 연결할 Mapper 파일 설정 -->
+<mapper namespace="ac.kr.ft.com.persistance.mapper.CommMapper">
+	<select id="getTodayVisitor" resultType="VisitorDTO">
+		SELECT VISITOR_CNT,
+		COUNT(TODAY) AS TO_CODE FROM VISITOR_INFO
+		WHERE TODAY =
+		TO_CHAR(SYSDATE,'YYYYMMDD')
+		GROUP BY VISITOR_CNT
+	</select>
+
+	<update id="visitorUpdate">
+		UPDATE VISITOR_INFO
+		SET VISITOR_CNT = #{visitor_cnt}
+		WHERE TODAY = TO_CHAR(SYSDATE,'YYYYMMDD')
+	</update>
+
+	<insert id="visitorInsert">
+		INSERT INTO VISITOR_INFO (TODAY, VISITOR_CNT)
+		VALUES
+		(TO_CHAR(SYSDATE,'YYYYMMDD'),1)
+	</insert>
+
+	<select id="getVisitorDto" resultType="VisitorDTO">
+		SELECT VISITOR_CNT, TODAY
+		FROM VISITOR_INFO
+		WHERE TODAY = TO_CHAR(SYSDATE,'YYYYMMDD')
+	</select>
+
+	<select id="getCtrR_cnt" resultType="ComDTO">
+		SELECT COUNT(CTR_SEQ) AS
+		CTRR_CNT FROM CTR_INFO
+		WHERE PROGRESS = 'R'
+	</select>
+
+	<select id="getCommunityCnt" resultType="ComDTO">
+		SELECT SUM(CNT) AS COMMUNITY_CNT FROM (
+		<!-- 커뮤니티 게시판 -->
+		SELECT COUNT(CMT_SEQ) AS CNT FROM COMMUNITY_INFO
+		WHERE REG_DT >=
+		SYSDATE-3
+		UNION ALL
+		<!-- 커뮤니티 게시판 댓글 -->
+		SELECT COUNT(COM_SEQ) AS CNT FROM COMMENT_COMMUNITY
+		WHERE REG_DT >=
+		SYSDATE-3
+		UNION ALL
+
+		<!-- 이벤트 게시판 댓글 -->
+		SELECT COUNT(COM_SEQ) AS CNT FROM COMMENT_EVENT
+		WHERE REG_DT >=
+		SYSDATE-3
+		UNION ALL
+
+		<!-- 메뉴 게시판 댓글 -->
+		SELECT COUNT(COM_SEQ) AS CNT FROM COMMENT_MENU
+		WHERE REG_DT >=
+		SYSDATE-3
+		UNION ALL
+
+		<!-- 공지사항 게시판 댓글 -->
+		SELECT COUNT(COM_SEQ) AS CNT FROM COMMENT_NOTICE
+		WHERE REG_DT >=
+		SYSDATE-3
+		)
+	</select>
+
+	<select id="getCommentList" resultType="ComDTO">
+		SELECT SEQ, CONTENTS, REG_DT, TABLE_NAME FROM (
+		SELECT ROWNUM AS RNUM,
+		SEQ, CONTENTS, REG_DT, TABLE_NAME FROM (
+		SELECT CMT_SEQ AS SEQ,
+		CONTENTS, REG_DT, 'CC' AS TABLE_NAME FROM
+		COMMENT_COMMUNITY
+		WHERE REG_DT
+		>= SYSDATE-3
+		UNION ALL
+
+		SELECT ENT_SEQ AS SEQ, CONTENTS, REG_DT, 'CE' AS
+		TABLE_NAME FROM
+		COMMENT_EVENT
+		WHERE REG_DT >= SYSDATE-3
+		UNION ALL
+
+		SELECT
+		NOTICE_SEQ AS SEQ, CONTENTS, REG_DT, 'CN' AS TABLE_NAME FROM
+		COMMENT_NOTICE
+		WHERE REG_DT >= SYSDATE-3
+		UNION ALL
+
+		SELECT MENU_SEQ AS
+		SEQ, CONTENTS, REG_DT, 'CM' AS TABLE_NAME FROM
+		COMMENT_MENU
+		WHERE REG_DT
+		>= SYSDATE-3
+		)
+		ORDER BY REG_DT DESC
+		)
+	<![CDATA[
+	WHERE RNUM <= 6
+	]]>
+
+	</select>
+
+	<select id="getJsonList" resultType="ComDTO">
+	<![CDATA[ 
+		SELECT 
+       STD.STD_DATE AS REG_DT,
+       NVL(SUM(DECODE(REG_DATA.BBS_CD, 'E0001', CTR_CNT)), 0) AS CTRR_CNT,
+       NVL(SUM(DECODE(REG_DATA.BBS_CD, 'E0002', CTR_CNT)), 0) AS VISITOR_CNT,
+       NVL(SUM(DECODE(REG_DATA.BBS_CD, 'E0003', CTR_CNT)), 0) AS COMMUNITY_CNT
+  FROM 
+      (
+       SELECT TO_CHAR(ADD_MONTHS(SYSDATE, -1) + LEVEL - 1, 'YYYYMMDD') AS STD_DATE
+         FROM DUAL
+       CONNECT BY LEVEL <= ((SYSDATE) - ADD_MONTHS(SYSDATE, -1) + 1)
+      ) STD,
+            (
+             SELECT 'E0001' AS BBS_CD, TO_CHAR(REG_DT,'YYYYMMDD') AS REG_DT,
+                    COUNT(CTR_SEQ) AS CTR_CNT
+               FROM CTR_INFO
+              WHERE REG_DT BETWEEN ADD_MONTHS(SYSDATE, -1) AND SYSDATE
+              GROUP BY TO_CHAR(REG_DT, 'YYYYMMDD')
+              UNION ALL 
+              
+             SELECT 'E0002' AS BBS_CD, TODAY AS REG_DT, VISITOR_CNT
+               FROM VISITOR_INFO
+              WHERE TODAY BETWEEN ADD_MONTHS(SYSDATE, -1) AND SYSDATE
+              UNION ALL
+              
+             SELECT 'E0003' AS BBS_CD, REG_DT, SUM(CNT) AS COMMUNITY_CNT
+               FROM (
+			               SELECT TO_CHAR(REG_DT, 'YYYYMMDD') AS REG_DT, COUNT(CMT_SEQ) AS CNT
+                       FROM COMMUNITY_INFO
+                      WHERE REG_DT BETWEEN ADD_MONTHS(SYSDATE, -1) AND SYSDATE
+                      GROUP BY TO_CHAR(REG_DT, 'YYYYMMDD')
+                      UNION ALL
+                      
+                     SELECT TO_CHAR(REG_DT, 'YYYYMMDD') AS REG_DT, COUNT(COM_SEQ) AS CNT
+                       FROM COMMENT_COMMUNITY
+                      WHERE REG_DT BETWEEN ADD_MONTHS(SYSDATE, -1) AND SYSDATE
+                      GROUP BY TO_CHAR(REG_DT, 'YYYYMMDD')
+			          UNION ALL
+			          
+			               SELECT TO_CHAR(REG_DT, 'YYYYMMDD') AS REG_DT, COUNT(COM_SEQ) AS CNT
+                       FROM COMMENT_EVENT
+                      WHERE REG_DT BETWEEN ADD_MONTHS(SYSDATE, -1) AND SYSDATE
+                      GROUP BY TO_CHAR(REG_DT, 'YYYYMMDD')
+			          UNION ALL
+			          
+			               SELECT TO_CHAR(REG_DT, 'YYYYMMDD') AS REG_DT, COUNT(COM_SEQ) AS CNT
+                       FROM COMMENT_MENU
+                      WHERE REG_DT BETWEEN ADD_MONTHS(SYSDATE, -1) AND SYSDATE
+                      GROUP BY TO_CHAR(REG_DT, 'YYYYMMDD')
+			          UNION ALL
+			          
+			               SELECT TO_CHAR(REG_DT, 'YYYYMMDD') AS REG_DT, COUNT(COM_SEQ) AS CNT
+                       FROM COMMENT_NOTICE
+				              WHERE REG_DT BETWEEN ADD_MONTHS(SYSDATE, -1) AND SYSDATE
+                      GROUP BY TO_CHAR(REG_DT, 'YYYYMMDD')
+                    )
+              GROUP BY REG_DT
+            ) REG_DATA
+  WHERE STD.STD_DATE = REG_DATA.REG_DT(+)
+  GROUP BY STD.STD_DATE
+  ORDER BY STD.STD_DATE DESC
+  	]]>
+	</select>
+
+
+	<select id="getNewList" resultType="ComDTO">
+		SELECT DISTINCT 'NOTICE' AS
+		kind
+		FROM NOTICE_INFO
+		WHERE REG_DT BETWEEN SYSDATE - 7 AND SYSDATE
+		UNION ALL
+		SELECT DISTINCT 'MENU' AS kind
+		FROM MENU_INFO
+		WHERE REG_DT BETWEEN SYSDATE - 7
+		AND SYSDATE
+		UNION ALL
+		SELECT DISTINCT 'EVENT' AS kind
+		FROM EVENT_INFO
+		WHERE REG_DT BETWEEN SYSDATE -
+		7 AND SYSDATE
+
+
+	</select>
+
+
+</mapper>

@@ -1,0 +1,436 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- JAVA와 연결할 Mapper 파일 설정 -->
+<!-- 기존 CtrSqlMap과 같음 -->
+
+<mapper namespace="ac.kr.ft.com.persistance.mapper.CtrMapper">
+
+	<select id="getCTRList" resultType="CtrDTO">
+		SELECT
+		CTR_SEQ,
+		TITLE,
+		CONTENTS,
+		PROGRESS,
+		EMAIL1,
+		EMAIL2,
+		REG_USER_NO,
+		REG_DT,
+		CHG_USER_NO,
+		CHG_DT,
+		USER_NAME
+		FROM
+		CTR_INFO
+		ORDER BY REG_DT DESC
+	</select>
+
+	<select resultType="CtrDTO" id="getCTRDetail" parameterType="CtrDTO">
+		SELECT
+		CTR_SEQ,
+		TITLE,
+		CONTENTS,
+		PROGRESS,
+		REG_USER_NO,
+		REG_DT,
+		CHG_USER_NO,
+		CHG_DT,
+		USER_NAME,
+		EMAIL1,
+		EMAIL2,
+		TEL_1,
+		TEL_2,
+		TEL_3
+		FROM CTR_INFO
+		<trim prefixOverrides="AND | OR" prefix="where">
+			<if test="ctr_seq != null"> AND CTR_SEQ = #{ctr_seq} </if>
+		</trim>
+	</select>
+
+	<insert id="createCTRInfo" parameterType="CtrDTO">
+		INSERT INTO CTR_INFO
+		(CTR_SEQ, TITLE, CONTENTS, PROGRESS,
+		USER_NAME, EMAIL1, EMAIL2,
+		TEL_1,
+		TEL_2, TEL_3,
+		REG_USER_NO, REG_DT, CHG_USER_NO, CHG_DT)
+		VALUES
+		(SEQ_CTR_SEQ.nextval, #{title}, #{contents}, #{progress},
+		#{user_name}, #{email1}, #{email2},
+		#{tel_1}, #{tel_2}, #{tel_3},
+		#{reg_user_no}, SYSDATE, #{reg_user_no}, SYSDATE)
+	</insert>
+
+
+	<update id="updateCTRInfo" parameterType="CtrDTO">
+		UPDATE CTR_INFO SET
+		TITLE=#{title},
+		CONTENTS=#{contents},
+		PROGRESS=#{progress},
+		USER_NAME=#{user_name},
+		EMAIL1=#{email1}, EMAIL2=#{email2},
+		TEL_1=#{tel_1}, TEL_2=#{tel_2}, TEL_3=#{tel_3},
+		CHG_USER_NO=#{chg_user_no},
+		CHG_DT=SYSDATE
+		WHERE CTR_SEQ = #{ctr_seq}
+	</update>
+
+	<delete id="deleteCTRInfo" parameterType="CtrDTO">
+		DELETE FROM CTR_INFO
+		WHERE CTR_SEQ = #{ctr_seq}
+	</delete>
+
+	<!-- 체크된 항목 삭제 -->
+	<delete id="deleteAllCheckList" parameterType="CtrDTO">
+		DELETE FROM CTR_INFO
+		WHERE CTR_SEQ IN
+
+		<foreach item="chkMenu" index="index" collection="allCheckSeq"
+			open="(" separator="," close=")">
+			#{chkMenu}
+		</foreach>
+
+	</delete>
+
+	<update id="updateCheck" parameterType="CtrDTO">
+		UPDATE CTR_INFO SET
+		PROGRESS=#{progress}
+		WHERE CTR_SEQ = #{ctr_seq}
+	</update>
+	
+	<!-- 힘 내고 있는데 왜 자꾸 힘내래  -->
+	<!-- ########################################################################## 
+		# 관리자 용 끝 # ########################################################################## 
+		########################################################################## 
+		# 사업자용 시작 # ########################################################################## -->
+
+	<select id="getBusiCTRList" resultType="CtrDTO">
+		SELECT
+		CTR_SEQ,
+		TITLE,
+		CONTENTS,
+		PROGRESS,
+		REG_USER_NO,
+		REG_DT,
+		CHG_USER_NO,
+		CHG_DT,
+		USER_NAME,
+		EMAIL1,
+		EMAIL2,
+		TEL_1,
+		TEL_2,
+		TEL_3,
+		PEOPLE,
+		EMAIL1,
+		EMAIL2,
+		PLACE
+		FROM
+		CTR_INFO
+		ORDER BY REG_DT DESC
+	</select>
+
+	<select resultType="CtrDTO" id="getBusiCTRDetail" parameterType="CtrDTO">
+		SELECT
+		CTR_SEQ,
+		TITLE,
+		PROGRESS,
+		REG_USER_NO,
+		REG_DT,
+		CHG_USER_NO,
+		CHG_DT,
+		USER_NAME,
+		TEL_1,
+		TEL_2,
+		TEL_3,
+		PEOPLE,
+		CONTENTS,
+		PLACE
+		FROM CTR_INFO
+		<trim prefixOverrides="AND | OR" prefix="where">
+			<if test="ctr_seq != null"> AND CTR_SEQ = #{ctr_seq} </if>
+		</trim>
+	</select>
+
+	<insert id="createBusiCTRInfo" parameterType="CtrDTO">
+		INSERT INTO
+		CTR_INFO
+		(CTR_SEQ, TITLE,
+		USER_NAME, PROGRESS, CONTENTS,
+		TEL_1, TEL_2,
+		TEL_3, PEOPLE, PLACE,
+		REG_USER_NO, REG_DT, CHG_USER_NO, CHG_DT,
+		USER_NO)
+		VALUES
+		(SEQ_CTR_SEQ.nextval, #{title},
+		#{user_name},
+		#{progress}, #{contents},
+		#{tel_1}, #{tel_2}, #{tel_3}, #{people},
+		#{place},
+		#{reg_user_no}, SYSDATE, #{reg_user_no}, SYSDATE, #{user_no})
+	</insert>
+
+
+	<update id="updateBusiCTRInfo" parameterType="CtrDTO">
+		UPDATE CTR_INFO SET
+		TITLE=#{title}, CONTENTS=#{contents},
+		USER_NAME=#{user_name},
+		PROGRESS=#{progress},
+		TEL_1=#{tel_1}, TEL_2=#{tel_2}, TEL_3=#{tel_3},
+		PEOPLE=#{people}, PLACE=#{place},
+		CHG_USER_NO=#{chg_user_no},
+		CHG_DT=SYSDATE
+		WHERE CTR_SEQ = #{ctr_seq}
+	</update>
+
+
+	<delete id="deleteBusiCTRInfo" parameterType="CtrDTO">
+		DELETE FROM
+		CTR_INFO
+		WHERE CTR_SEQ = #{ctr_seq}
+	</delete>
+
+	<!-- 체크된 항목 삭제 -->
+	<delete id="deleteBusiAllCheckList" parameterType="CtrDTO">
+		DELETE FROM CTR_INFO
+		WHERE CTR_SEQ IN
+
+		<foreach item="chkMenu" index="index" collection="allCheckSeq"
+			open="(" separator="," close=")">
+			#{chkMenu}
+		</foreach>
+
+	</delete>
+
+	<update id="updateBusiCheck" parameterType="CtrDTO">
+		UPDATE CTR_INFO SET
+		PROGRESS=#{progress}
+		WHERE CTR_SEQ = #{ctr_seq}
+	</update>
+
+
+	<!-- (사업자)게시판 리스트 가져오기 -->
+	<select id="getBusiList" resultType="CtrDTO" parameterType="CtrDTO">
+	   <![CDATA[   
+	   	 
+  	 SELECT *
+	     FROM (
+     	 SELECT 
+      	  ROWNUM AS RNUM, 
+       	  PAGETABLE.*
+       		  FROM (
+		       SELECT
+		       MI.CTR_SEQ,
+		       MI.TITLE,
+		       MI.PROGRESS,
+		       MI.USER_NO,		    
+		       TO_CHAR (MI.REG_DT,'YYYY.MM.DD') AS REG_DT, 
+		       U.USER_NAME
+		       FROM CTR_INFO MI, USER_INFO U
+		       WHERE MI.USER_NO = U.USER_NO
+		       ]]>
+		<if test="searchBox == 'TITLE' and searchText != ''">
+			AND TITLE LIKE '%' || #{searchText} || '%'
+		</if>
+		<if test="searchBox == 'USER_NAME' and searchText != ''">
+			AND USER_NAME LIKE '%' || #{searchText} || '%'
+		</if>
+			  <![CDATA[        
+		       
+		       ORDER BY MI.REG_DT DESC
+			        ) PAGETABLE
+         WHERE ROWNUM < #{end_page}
+      )
+   WHERE RNUM >= #{start_page}  
+			   	       			       
+	 ]]>
+
+	</select>
+
+	<!-- (사업자)게시물 리스트 수 가져오기 -->
+
+	<select id="getBusiListCnt" resultType="CtrDTO" parameterType="CtrDTO">
+		SELECT
+		COUNT(CTR_SEQ) AS CNT
+		FROM CTR_INFO
+		<!-- <if test="user_no!=null"> -->
+		<!-- WHERE USER_NO = #{user_no} -->
+		<!-- </if> -->
+		<if test="searchBox == 'TITLE' and searchText != ''">
+			WHERE TITLE LIKE '%' || #{searchText} || '%'
+		</if>
+		<if test="searchBox == 'USER_NAME' and searchText != ''">
+			WHERE USER_NAME LIKE '%' || #{searchText} || '%'
+		</if>
+
+	</select>
+
+	<!-- ########################################################################## 
+		# 사업자 용 끝 # ########################################################################## 
+		########################################################################## 
+		# 사용자 시작 # ########################################################################## -->
+
+	<select id="getGuestCTRList" resultType="CtrDTO">
+		SELECT
+		CTR_SEQ,
+		TITLE,
+		CONTENTS,
+		PROGRESS,
+		REG_USER_NO,
+		REG_DT,
+		CHG_USER_NO,
+		CHG_DT,
+		USER_NAME,
+		EMAIL1,
+		EMAIL2,
+		TEL_1,
+		TEL_2,
+		TEL_3,
+		PEOPLE,
+		PLACE
+		FROM
+		CTR_INFO
+		ORDER BY REG_DT DESC
+	</select>
+
+	<select resultType="CtrDTO" id="getGuestCTRDetail"
+		parameterType="CtrDTO">
+		SELECT
+		CTR_SEQ,
+		TITLE,
+		PROGRESS,
+		REG_USER_NO,
+		REG_DT,
+		CHG_USER_NO,
+		CHG_DT,
+		USER_NAME,
+		TEL_1,
+		TEL_2,
+		TEL_3,
+		PEOPLE,
+		CONTENTS,
+		PLACE
+		FROM CTR_INFO
+		<trim prefixOverrides="AND | OR" prefix="where">
+			<if test="ctr_seq != null"> AND CTR_SEQ = #{ctr_seq} </if>
+		</trim>
+	</select>
+
+	<insert id="createGuestCTRInfo" parameterType="CtrDTO">
+		INSERT INTO
+		CTR_INFO
+		(CTR_SEQ, TITLE,
+		USER_NAME, PROGRESS, CONTENTS,
+		TEL_1, TEL_2,
+		TEL_3, PEOPLE, PLACE,
+		REG_USER_NO, REG_DT, CHG_USER_NO, CHG_DT,
+		USER_NO)
+		VALUES
+		(SEQ_CTR_SEQ.nextval, #{title},
+		#{user_name},
+		#{progress}, #{contents},
+		#{tel_1}, #{tel_2}, #{tel_3}, #{people},
+		#{place},
+		#{reg_user_no}, SYSDATE, #{reg_user_no}, SYSDATE, #{user_no})
+	</insert>
+
+
+	<update id="updateGuestCTRInfo" parameterType="CtrDTO">
+		UPDATE CTR_INFO
+		SET
+		TITLE=#{title}, CONTENTS=#{contents},
+		USER_NAME=#{user_name},
+		PROGRESS=#{progress},
+		TEL_1=#{tel_1}, TEL_2=#{tel_2}, TEL_3=#{tel_3},
+		PEOPLE=#{people}, PLACE=#{place},
+		CHG_USER_NO=#{chg_user_no},
+		CHG_DT=SYSDATE
+		WHERE CTR_SEQ = #{ctr_seq}
+	</update>
+
+
+	<delete id="deleteGuestCTRInfo" parameterType="CtrDTO">
+		DELETE FROM
+		CTR_INFO
+		WHERE CTR_SEQ = #{ctr_seq}
+	</delete>
+
+	<!-- 체크된 항목 삭제 -->
+	<delete id="deleteGuestAllCheckList" parameterType="CtrDTO">
+		DELETE FROM CTR_INFO
+		WHERE CTR_SEQ IN
+
+		<foreach item="chkMenu" index="index" collection="allCheckSeq"
+			open="(" separator="," close=")">
+			#{chkMenu}
+		</foreach>
+
+	</delete>
+
+	<update id="updateGuestCheck" parameterType="CtrDTO">
+		UPDATE CTR_INFO SET
+		PROGRESS=#{progress}
+		WHERE CTR_SEQ = #{ctr_seq}
+	</update>
+
+
+	<!-- (사업자)게시판 리스트 가져오기 -->
+	<select id="getGuestList" resultType="CtrDTO" parameterType="CtrDTO">
+	   <![CDATA[   
+	   	 
+  	 SELECT *
+	     FROM (
+     	 SELECT 
+      	  ROWNUM AS RNUM, 
+       	  PAGETABLE.*
+       		  FROM (
+		       SELECT
+		       MI.CTR_SEQ,
+		       MI.TITLE,
+		       MI.PROGRESS,
+		       MI.USER_NO,		    
+		       TO_CHAR (MI.REG_DT,'YYYY.MM.DD') AS REG_DT, 
+		       U.USER_NAME
+		       FROM CTR_INFO MI, USER_INFO U
+		       WHERE MI.USER_NO = U.USER_NO
+		              ]]>
+		<if test="searchBox == 'TITLE' and searchText != ''">
+			AND TITLE LIKE '%' || #{searchText} || '%'
+		</if>
+		<if test="searchBox == 'USER_NAME' and searchText != ''">
+			AND USER_NAME LIKE '%' || #{searchText} || '%'
+		</if>
+			  <![CDATA[        
+		       
+		       AND MI.USER_NO = #{user_no}
+		       ORDER BY MI.REG_DT DESC
+			        ) PAGETABLE
+         WHERE ROWNUM < #{end_page}
+      )
+   WHERE RNUM >= #{start_page}  
+			   	       			       
+	 ]]>
+
+	</select>
+
+	<!-- (사업자)게시물 리스트 수 가져오기 -->
+
+	<select id="getGuestListCnt" resultType="CtrDTO" parameterType="CtrDTO">
+		SELECT
+		COUNT(CTR_SEQ) AS CNT
+		FROM CTR_INFO
+		<!-- <if test="user_no!=null"> -->
+		<!-- WHERE USER_NO = #{user_no} -->
+		<!-- </if> -->
+         
+		<if test="searchBox == 'TITLE' and searchText != ''">
+			WHERE TITLE LIKE '%' || #{searchText} || '%'
+		</if>
+		<if test="searchBox == 'USER_NAME' and searchText != ''">
+			WHERE USER_NAME LIKE '%' || #{searchText} || '%'
+		</if>
+
+	</select>
+
+
+	<!-- ########################################################################## 
+		# 사용자 끝 # ########################################################################## -->
+</mapper>
+		

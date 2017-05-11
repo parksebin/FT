@@ -1,0 +1,5 @@
+eclipse.preferences.version=1
+encoding//src/ac/kr/ft/com/controller/ComController.java=UTF-8
+encoding//src/ac/kr/ft/com/controller/ScheduleController.java=EUC-KR
+encoding//src/ac/kr/ft/com/persistance/sqlmap/mapper/AuthMapper.xml=UTF-8
+encoding//src/config/MapperConfigurer.java=UTF-8

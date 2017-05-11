@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ac.kr.ft.com.persistance.mapper.PositionMapper">
+	<update id="positionUpdate" parameterType="PositionDTO">
+		UPDATE POSITION_INFO 
+		SET TITLE=#{title}, LAT=#{lat}, LNG=#{lng}, CHG_DT=SYSDATE, CHG_USER_NO=#{chg_user_no}
+		WHERE PO_SEQ=1
+	</update>
+	
+	<select id="getPosition" resultType="PositionDTO">
+		SELECT * FROM POSITION_INFO
+			WHERE PO_SEQ=1
+	</select>
+</mapper>

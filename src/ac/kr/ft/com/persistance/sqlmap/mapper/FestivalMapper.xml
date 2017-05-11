@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="EUC-KR"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- JAVA와 연결할 Mapper 파일 설정 -->
+<mapper namespace="ac.kr.ft.com.persistance.mapper.FestivalMapper">
+	<select id="getFestList" resultType="FestivalDTO">
+ <![CDATA[
+		 
+		SELECT fst_seq, city, local, attractions FROM FESTIVAL_INFO
+		WHERE TO_NUMBER(FST_SEQ) > 0 and TO_NUMBER(FST_SEQ) < 4500 
+        ORDER BY TO_NUMBER(fst_seq)
+]]>
+ </select> 
+ 
+	
+		<insert id="createfestInfo" parameterType="FestivalDTO"> 
+	insert into festival_info
+		(fst_seq, city, local, attractions, pay, nation,
+		
+		jan, feb, mar, apr, may, jun,
+		jul, aug, sep, oct, nov, dec,
+		 
+		file_grp,
+		
+		fst_exp,
+		 
+		fst_host, hostph_1, hostph_2,hostph_3, reg_user_name, reg_dt)
+		 
+		
+		values 
+		(seq_fst_seq.nextval, #{city}, #{local}, #{attractions}, #{pay}, #{nation},
+		
+		 #{jan}, #{feb}, #{mar}, #{apr}, #{may}, #{jun},
+		 #{jul}, #{aug}, #{sep}, #{oct}, #{nov}, #{dec},
+		 
+		#{file_grp},
+		 
+		 #{fst_exp},
+		 
+		 #{fst_host}, #{hostph_1}, #{hostph_2}, #{hostph_3}, #{reg_user_name},SYSDATE)
+		 
+	</insert>
+	<select resultType="FestivalDTO" id="getfestDetail" parameterType="FestivalDTO">
+	
+	
+	SELECT 
+			FI.FST_SEQ,	FI.CITY, FI.LOCAL, FI.ATTRACTIONS, FI.PAY, FI.NATION,
+			
+			FI.JAN,	FI.FEB,	FI.MAR, FI.APR,	FI.MAY,	FI.JUN,
+			FI.JUL,	FI.AUG,	FI.SEP,	FI.OCT,	FI.NOV,	FI.DEC,
+			
+			FI.FST_EXP,	FI.FST_HOST, FI.HOSTPH_1, FI.HOSTPH_2, FI.HOSTPH_3,
+			
+			(SELECT A.FILE_PATH ||'/'|| A.FILE_SAVE_NAME FROM FILE_INFO A WHERE A.FILE_GRP = FI.FILE_GRP) AS FILE_NAME,
+			
+			FI.REG_USER_NAME,			
+			TO_CHAR(FI.REG_DT, 'YYYYMMDD') AS REG_DT,
+			FI.CHG_USER_NAME,
+			TO_CHAR(FI.CHG_DT, 'YYYYMMDD') AS CHG_DT,
+			FI.DONGMYUN
+			
+		  FROM FESTIVAL_INFO FI
+		  
+		 WHERE FST_SEQ = #{fst_seq}
+
+	</select>
+	  <update id="festupdateform" parameterType="FestivalDTO">
+   <!--  /* UPDATE EVENT_INFO SET TITLE=#{title}, CONTENTS=#{contents}, FILE_NAME=#{file_name}, FILE_PATH=#{file_path},READ_CNT=#{read_cnt}, REG_USER_NO=#{reg_user_no}, REG_DT=SYSDATE, CHG_USER_NO=#{chg_user_no}, CHG_DT=SYSDATE 
+      WHERE ENT_SEQ = #{ent_seq}*/-->
+      UPDATE FESTIVAL_INFO SET 
+     	 
+     	CITY = #{city}, LOCAL = #{local}, ATTRACTIONS = #{attractions}, PAY = #{pay}, NATION = #{nation},
+	 		
+		JAN = #{jan}, FEB = #{feb}, MAR = #{mar}, APR = #{apr}, MAY = #{may}, JUN = #{jun},
+	 		
+		JUL = #{jul}, AUG = #{aug}, SEP = #{sep}, OCT = #{oct}, NOV = #{nov}, DEC = #{dec},
+		
+		FST_EXP = #{fst_exp}, FST_HOST = #{fst_host}, HOSTPH_1 = #{hostph_1}, HOSTPH_2 = #{hostph_2},
+	
+		HOSTPH_3 = #{hostph_3}, FILE_GRP=#{file_grp}, CHG_USER_NAME = #{chg_user_name}, CHG_DT= SYSDATE
+     	
+      WHERE FST_SEQ = #{fst_seq}
+      <!--, LOCAL=#{local}, POPULATION=#{population}, FES_START=#{fes_start},
+      FES_END=#{fes_end}, TRANSFER=#{transfer}, FILE_NAME1=#{file_name1}, FILE_NAME2=#{file_name2}, 
+      FILE_NAME3=#{file_name2},FILE_PATH1= #{file_path1}, FILE_PATH2=#{file_path2}, FILE_PATH3=#{file_path3},
+      FST_EXP= #{fst_exp}, FST_HOST=#{fst_host}, HOSTPH_1=#{hostph_1}, HOSTPH_2=#{hostph_2},
+      HOSTPH_3= #{hostph_3}, HOSTEMAIL_1=#{hostemail_1},HOSTEMAIL_2= #{hostemail_2},REG_USER_NO= #{reg_user_no}, 
+       SYSDATE,PEAKTIME1=#{peaktime1}, PEAKTIME2=#{peaktime2},PEAKTIME=3 #{peaktime3},PEAKTIME4= #{peaktime4}) -->
+   </update>
+	
+
+	<!-- 
+	 * #########################################################################
+	 * # # 사업자용 시작 #
+	 * #########################################################################
+	 * #
+	 * 
+	  -->
+	  <select id="getBusiListAjax" resultType="FestivalDTO" parameterType="FestivalDTO">
+	   <![CDATA[   
+	   	 
+  	   	  SELECT *
+   FROM (
+         SELECT 
+                ROWNUM AS RNUM, 
+                PAGETABLE.*
+           FROM (
+                 SELECT
+                        FI.FST_SEQ,
+                        FI.CITY,
+                        FI.LOCAL,
+                        FI.ATTRACTIONS,
+                        FI.NATION,
+                        (
+                         SELECT A.FILE_PATH || '/' ||
+                                A.FILE_SAVE_NAME
+                           FROM FILE_INFO A 
+                          WHERE A.FILE_GRP = FI.FILE_GRP
+                        ) AS FILE_NAME
+                   FROM FESTIVAL_INFO FI, USER_INFO U
+                  WHERE FI.USER_NO = U.USER_NO
+                  ORDER BY TO_NUMBER(FI.FST_SEQ)
+                ) PAGETABLE
+          WHERE ROWNUM < #{end_page}
+        )
+  WHERE RNUM >= #{start_page}    
+		   	       		
+		   	       	       
+	 ]]>
+		
+		</select>
+	
+	
+	
+	<!-- (사업자)게시물 리스트 수 가져오기 -->
+	
+	
+	<select id="getBusiList" resultType="FestivalDTO" parameterType="FestivalDTO">
+		<![CDATA[
+		SELECT
+			COUNT(ATTRACTIONS) AS CNT
+		FROM FESTIVAL_INFO
+		ORDER BY TO_NUMBER(fst_seq)
+		
+	]]>
+	</select>
+	  
+	  
+	  
+	<!-- <select resultType="FestivalDTO" id="getfestList" parameterType="FestivalDTO">
+	
+	
+	select * from 
+         (select rownum rnum, #{fst_seq}, #{city}, #{local}, content, type, boarddate from
+         (select * from zpro_board where type=#{type} order by boardnum desc))
+         where rnum >= #{startrow} and rnum <= #{endrow}
+
+	</select> -->
+	<select resultType="FestivalDTO" id="getbusiFestDetail" parameterType="FestivalDTO">
+	
+	
+	SELECT 
+			FI.FST_SEQ,	FI.CITY, FI.LOCAL, FI.ATTRACTIONS, FI.PAY, FI.NATION,
+			
+			FI.JAN,	FI.FEB,	FI.MAR, FI.APR,	FI.MAY,	FI.JUN,
+			FI.JUL,	FI.AUG,	FI.SEP,	FI.OCT,	FI.NOV,	FI.DEC,
+			
+			FI.FST_EXP,	FI.FST_HOST, FI.HOSTPH_1, FI.HOSTPH_2, FI.HOSTPH_3,
+			
+			(SELECT A.FILE_PATH ||'/'|| A.FILE_SAVE_NAME FROM FILE_INFO A WHERE A.FILE_GRP = FI.FILE_GRP) AS FILE_NAME,
+			
+			FI.REG_USER_NAME,			
+			TO_CHAR(FI.REG_DT, 'YYYYMMDD') AS REG_DT,
+			FI.CHG_USER_NAME,
+			TO_CHAR(FI.CHG_DT, 'YYYYMMDD')	AS CGH_DT,
+			FI.DONGMYUN
+			
+		  FROM FESTIVAL_INFO FI
+		  
+		 WHERE FST_SEQ = #{fst_seq}
+
+	</select>
+	
+	
+</mapper>

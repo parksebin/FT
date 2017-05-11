@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="EUC-KR"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- JAVA와 연결할 Mapper 파일 설정 -->
+<!-- 기존 CtrSqlMap과 같음 -->
+
+<mapper namespace="ac.kr.ft.com.persistance.mapper.SalesMapper">
+	
+	
+	
+<!-- 
+##############################################################################################
+											사업자 시작
+################################################################################################
+-->
+	
+<!-- 골목 상권 순위 리스트 조회  하기 -->
+<select id="getBusiSalesList" parameterType="SalesDTO" resultType="SalesDTO">
+<![CDATA[
+	SELECT * FROM ( 
+		SELECT ROWNUM AS RNUM, PAGETABLE.* FROM (
+		 
+	          SELECT
+	                 YYYYMM,
+	                 SALES_CD,
+	                 (CASE WHEN INSTR(SALES_NM, '_') = 0 THEN SALES_NM
+             			   ELSE SUBSTR(SALES_NM,1, (INSTR(SALES_NM, '_')-1)) END) AS SALES_NM,
+	                 NVL(ROUND(AVG(ST_CD1),2), 0) ||'<br/>('||
+	                 (CASE WHEN (NVL(ROUND(AVG(ST_CD1),2), 0)) > 50 THEN '경계'
+	                       ELSE '주의 'END) ||')' 
+	                  AS ST_CD1,
+	                NVL(ROUND(AVG(ST_CD2),2), 0) ||'<br/>('||
+	                (CASE WHEN (NVL(ROUND(AVG(ST_CD2),2), 0)) > 60 THEN '높음'
+	                      WHEN(NVL(ROUND(AVG(ST_CD2),2), 0) > 50 )THEN '약간높음'
+	                      ELSE '보통 'END) ||')'                   
+	                 AS ST_CD2,
+	                 NVL(ROUND(AVG(ST_CD3),2), 0) ||'<br/>('||
+	                (CASE WHEN (NVL(ROUND(AVG(ST_CD3),3), 0)) > 60 THEN '높음'
+	                      WHEN(NVL(ROUND(AVG(ST_CD3),3), 0) > 50 )THEN '약간높음'
+	                      ELSE '보통 'END) ||')'                  
+	                 AS ST_CD3,
+	                 NVL(ROUND(AVG(ST_CD4),2), 0) ||'<br/>('||
+	                (CASE WHEN (NVL(ROUND(AVG(ST_CD1),4), 0)) > 60 THEN '높음'
+	                      WHEN(NVL(ROUND(AVG(ST_CD1),4), 0) > 50 )THEN '약간높음'
+	                      ELSE '보통 'END) ||')'           
+	                  AS ST_CD4
+	            FROM FT.SALES_AREA_INFO
+	           WHERE YYYYMM LIKE '201608'
+	             AND SALES_TP_CD IN ('CS100005', 'CS100006', 'CS100009')
+	          GROUP BY YYYYMM, SALES_CD, SALES_NM
+	        ORDER BY ST_CD2 DESC, ST_CD4
+	
+	) 
+	PAGETABLE WHERE ROWNUM < #{end_page} ) WHERE RNUM >= #{start_page} 
+]]>
+</select>
+
+
+<!-- 골목 상권 순위 리스트 수 가져오기 -->
+<select id="getBusiSalesListCnt" parameterType="SalesDTO" resultType="SalesDTO">
+
+	SELECT COUNT (1) AS CNT
+	  FROM (  SELECT YYYYMM
+	            FROM FT.SALES_AREA_INFO
+	           WHERE YYYYMM = '201608'
+                 AND YYYYMM LIKE '2016%'
+                 AND SALES_TP_CD IN ('CS100005', 'CS100006', 'CS100009')	           
+	        GROUP BY YYYYMM, SALES_CD, SALES_NM)
+	        
+</select>
+
+
+<!-- 골목 상권 상세정보(기본) -->
+<select id="getBusiSalesDetail" parameterType="SalesDTO" resultType="SalesDTO">
+
+	  SELECT 
+             SUBSTR(YYYYMM, 1,4)||'-'|| SUBSTR(YYYYMM, 5,2) AS YYYYMM, 
+             MAX(DECODE(SALES_TP_CD, 'CS100005', NVL(ST_CD1, 0))) ST_CD_CS100005,
+             MAX(DECODE(SALES_TP_CD, 'CS100006', NVL(ST_CD1, 0))) ST_CD_CS100006,
+             MAX(DECODE(SALES_TP_CD, 'CS100009', NVL(ST_CD1, 0))) ST_CD_CS100009
+	    FROM FT.SALES_AREA_INFO
+	   WHERE     SALES_CD = #{sales_cd}
+	         AND YYYYMM LIKE '2016%'
+	         AND SALES_TP_CD IN ('CS100005', 'CS100006', 'CS100009')
+	GROUP BY YYYYMM    
+	ORDER BY YYYYMM   
+	        
+</select>
+
+<!-- 골목 상권 상세정보(기본-도넛 차트) -->
+<select id="getBusiSalesDonutsChart" parameterType="SalesDTO" resultType="SalesDTO">
+
+  SELECT 
+         (CASE WHEN (NVL(ROUND(AVG(ST_CD1),2), 0)) > 50 THEN '경계'
+               ELSE '주의 'END)
+          AS ST_NM1,
+               (CASE WHEN (NVL(ROUND(AVG(ST_CD2),2), 0)) > 60 THEN '높음'
+              WHEN(NVL(ROUND(AVG(ST_CD2),2), 0) > 50 )THEN '약간높음'
+              ELSE '보통 'END)                
+         AS ST_NM2,
+        (CASE WHEN (NVL(ROUND(AVG(ST_CD3),3), 0)) > 60 THEN '높음'
+              WHEN(NVL(ROUND(AVG(ST_CD3),3), 0) > 50 )THEN '약간높음'
+              ELSE '보통 'END)                  
+         AS ST_NM3,
+        (CASE WHEN (NVL(ROUND(AVG(ST_CD1),4), 0)) > 60 THEN '높음'
+              WHEN(NVL(ROUND(AVG(ST_CD1),4), 0) > 50 )THEN '약간높음'
+              ELSE '보통 'END)           
+          AS ST_NM4,  
+         NVL(ROUND(AVG(ST_CD1),2), 0) AS ST_CD1,
+         NVL(ROUND(AVG(ST_CD2),2), 0) AS ST_CD2,
+         NVL(ROUND(AVG(ST_CD3),2), 0) AS ST_CD3,
+         NVL(ROUND(AVG(ST_CD4),2), 0) AS ST_CD4 
+    FROM FT.SALES_AREA_INFO
+   WHERE     SALES_CD = #{sales_cd}
+         AND YYYYMM LIKE '2016%'
+         AND SALES_TP_CD IN ('CS100005', 'CS100006', 'CS100009')
+	        
+</select>
+
+<!-- 골목 상권 상세정보(상권 이름가져오기) -->
+<select id="getBusiSalesNmInfo" parameterType="SalesDTO" resultType="SalesDTO">
+
+  SELECT 
+          MAX(CASE WHEN INSTR(SALES_NM, '_') = 0 THEN SALES_NM
+              ELSE SUBSTR(SALES_NM,1, (INSTR(SALES_NM, '_')-1)) END) AS SALES_NM  
+    FROM FT.SALES_AREA_INFO
+   WHERE     SALES_CD = #{sales_cd}
+         AND YYYYMM LIKE '2016%'
+         AND SALES_TP_CD IN ('CS100005', 'CS100006', 'CS100009')
+	        
+</select>
+
+<!-- 골목 상권 상세정보(점포증감률, 신규 창업 위험 지수 바차트) -->
+<select id="getBusiSalesBarChart" parameterType="SalesDTO" resultType="SalesDTO">
+
+	 SELECT SUBSTR(YYYYMM, 1,4)||'-'|| SUBSTR(YYYYMM, 5,2) AS YYYYMM,
+	       (NVL (ROUND (RATE4, 2), 0)) AS RATE4,
+	       (NVL (ROUND (RATE5, 2), 0)) AS RATE5
+	  FROM FT.AREA_MATCH AM, FT.RETIRE_INFO RI
+	 WHERE     AM.SALES_CD = #{sales_cd}
+	       AND AM.CITY_CD = RI.CITY_CD
+	       AND RI.RATE4 IS NOT NULL
+	       AND RI.RATE5 IS NOT NULL
+	ORDER BY YYYYMM          
+		        
+</select>
+
+<!-- 축제-상권에 사용될 골목 상권 1번째 차트용 -->
+<select id="getBusiFestivaSalesNmInfo" parameterType="SalesDTO" resultType="SalesDTO">
+<![CDATA[
+	  SELECT 
+             SUBSTR(YYYYMM, 1,4)||'-'|| SUBSTR(YYYYMM, 5,2) AS YYYYMM, 
+             MAX(DECODE(SALES_TP_CD, 'CS100005', NVL(ST_CD1, 0))) ST_CD_CS100005,
+             MAX(DECODE(SALES_TP_CD, 'CS100006', NVL(ST_CD1, 0))) ST_CD_CS100006,
+             MAX(DECODE(SALES_TP_CD, 'CS100009', NVL(ST_CD1, 0))) ST_CD_CS100009
+	    FROM FT.SALES_AREA_INFO
+	   WHERE SALES_CD = 
+                      (
+                      SELECT 
+                      MAX(SALES_CD) FROM 
+                      AREA_MATCH AMT 
+                      WHERE AMT.SALES_NM LIKE (SELECT MAX(SUBSTR(FI.LINK_ADDR, 1, 2)) ||'%' FROM FESTIVAL_INFO FI WHERE FST_SEQ= #{fst_seq})
+                      )
+	         AND YYYYMM LIKE '2016%'
+	         AND SALES_TP_CD IN ('CS100005', 'CS100006', 'CS100009')
+	GROUP BY YYYYMM    
+	ORDER BY YYYYMM  
+]]>
+</select>
+
+
+<!-- 골목 상권 상세정보(기본-도넛 차트) -->
+<select id="getBusiFestivaSalesNmInfoDonuts" parameterType="SalesDTO" resultType="SalesDTO">
+
+  SELECT 
+         (CASE WHEN (NVL(ROUND(AVG(ST_CD1),2), 0)) > 50 THEN '경계'
+               ELSE '주의 'END)
+          AS ST_NM1,
+               (CASE WHEN (NVL(ROUND(AVG(ST_CD2),2), 0)) > 60 THEN '높음'
+              WHEN(NVL(ROUND(AVG(ST_CD2),2), 0) > 50 )THEN '약간높음'
+              ELSE '보통 'END)                
+         AS ST_NM2,
+        (CASE WHEN (NVL(ROUND(AVG(ST_CD3),3), 0)) > 60 THEN '높음'
+              WHEN(NVL(ROUND(AVG(ST_CD3),3), 0) > 50 )THEN '약간높음'
+              ELSE '보통 'END)                  
+         AS ST_NM3,
+        (CASE WHEN (NVL(ROUND(AVG(ST_CD1),4), 0)) > 60 THEN '높음'
+              WHEN(NVL(ROUND(AVG(ST_CD1),4), 0) > 50 )THEN '약간높음'
+              ELSE '보통 'END)           
+          AS ST_NM4,  
+         NVL(ROUND(AVG(ST_CD1),2), 0) AS ST_CD1,
+         NVL(ROUND(AVG(ST_CD2),2), 0) AS ST_CD2,
+         NVL(ROUND(AVG(ST_CD3),2), 0) AS ST_CD3,
+         NVL(ROUND(AVG(ST_CD4),2), 0) AS ST_CD4 
+    FROM FT.SALES_AREA_INFO
+	 WHERE   SALES_CD = 
+                      (
+                      SELECT 
+                      MAX(SALES_CD) FROM 
+                      AREA_MATCH AMT 
+                      WHERE AMT.SALES_NM LIKE (SELECT MAX(SUBSTR(FI.LINK_ADDR, 1, 2)) ||'%' FROM FESTIVAL_INFO FI WHERE FST_SEQ= #{fst_seq})
+                      )
+         AND YYYYMM LIKE '2016%'
+         AND SALES_TP_CD IN ('CS100005', 'CS100006', 'CS100009')
+	        
+</select>
+
+<!-- 축제 상권 상세정보(점포증감률, 신규 창업 위험 지수 바차트) -->
+<select id="getFestivaSalesNmInfoBarChart" parameterType="SalesDTO" resultType="SalesDTO">
+
+	 SELECT SUBSTR(YYYYMM, 1,4)||'-'|| SUBSTR(YYYYMM, 5,2) AS YYYYMM,
+	       (NVL (ROUND (RATE4, 2), 0)) AS RATE4,
+	       (NVL (ROUND (RATE5, 2), 0)) AS RATE5
+	  FROM FT.AREA_MATCH AM, FT.RETIRE_INFO RI
+	 WHERE     AM.SALES_CD = 
+                      (
+                      SELECT 
+                      MAX(SALES_CD) FROM 
+                      AREA_MATCH AMT 
+                      WHERE AMT.SALES_NM LIKE (SELECT MAX(SUBSTR(FI.LINK_ADDR, 1, 2)) ||'%' FROM FESTIVAL_INFO FI WHERE FST_SEQ= #{fst_seq})
+                      )	 
+	       AND AM.CITY_CD = RI.CITY_CD
+	       AND RI.RATE4 IS NOT NULL
+	       AND RI.RATE5 IS NOT NULL
+	ORDER BY YYYYMM          
+		        
+</select>
+
+</mapper>
+
+
+		

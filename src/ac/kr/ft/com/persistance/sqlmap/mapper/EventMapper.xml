@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ac.kr.ft.com.persistance.mapper.EventMapper">
+
+	<select id="getEventList" resultType="EventDTO">
+		SELECT
+			MI.ENT_SEQ,
+			MI.TITLE,
+			MI.READ_CNT,
+			U.USER_NAME,
+			MI.REG_DT,
+			MI.CHG_DT,
+			(SELECT A.FILE_PATH 
+			||'/'||
+			A.FILE_SAVE_NAME FROM FILE_INFO A WHERE
+			A.FILE_GRP =
+			MI.FILE_GRP) AS
+			FILE_NAME
+		FROM EVENT_INFO MI, USER_INFO U
+		WHERE
+			MI.USER_NO = U.USER_NO
+		ORDER BY
+		MI.REG_DT DESC
+	</select>
+
+	<select id="getEventDetail" resultType="EventDTO" parameterType="EventDTO">
+		SELECT
+			MI.ENT_SEQ,
+			MI.TITLE,
+			MI.CONTENTS,
+			MI.READ_CNT,
+			U.USER_NAME,
+			U.USER_NO,
+			MI.REG_USER_NO,
+			MI.REG_DT,
+			MI.CHG_USER_NO,
+			MI.CHG_DT,
+			(SELECT A.FILE_PATH ||'/'||
+			A.FILE_SAVE_NAME FROM FILE_INFO A WHERE
+			A.FILE_GRP = MI.FILE_GRP) AS
+			FILE_NAME
+		FROM EVENT_INFO MI, USER_INFO U
+		WHERE
+			MI.USER_NO = U.USER_NO
+			AND ENT_SEQ= #{ent_seq}
+	</select>
+
+	<insert id="createEventInfo" parameterType="EventDTO">
+		INSERT INTO
+		EVENT_INFO(
+			ENT_SEQ,
+			TITLE,
+			CONTENTS,
+			READ_CNT,
+			USER_NO,
+			REG_USER_NO,
+			REG_DT,
+			FILE_GRP
+		)
+		VALUES(
+			SEQ_ENT_SEQ.NEXTVAL,
+			#{title},
+			#{contents},
+			0,
+			#{reg_user_no},
+			#{reg_user_no},
+			SYSDATE,
+			#{file_grp}
+		)
+
+	</insert>
+
+	<delete id="deleteAllCheckList" parameterType="EventDTO">
+		DELETE FROM EVENT_INFO
+		WHERE ENT_SEQ IN
+		<foreach close=")" separator="," open="(" collection="allCheckSeq"
+			index="index" item="item"> #{item}
+		</foreach>
+
+	</delete>
+
+	<delete id="deleteAllCheckListComment" parameterType="EventDTO">
+		DELETE FROM 
+			COMMENT_EVENT
+		WHERE ENT_SEQ IN
+		<foreach close=")" separator="," open="(" collection="allCheckSeq"
+			index="index" item="item"> #{item}
+		</foreach>
+
+	</delete>
+
+	<delete id="deleteEventInfo" parameterType="EventDTO">
+		DELETE FROM
+			EVENT_INFO
+		WHERE ENT_SEQ = #{ent_seq}
+	</delete>
+
+
+	<update id="updateEventInfo" parameterType="EventDTO">
+		UPDATE EVENT_INFO SET
+			TITLE=#{title},
+			CONTENTS=#{contents},
+			READ_CNT=READ_CNT+1,
+			CHG_USER_NO=#{chg_user_no},
+			CHG_DT=SYSDATE,
+			FILE_GRP=#{file_grp}
+		WHERE
+			ENT_SEQ =#{ent_seq}
+	</update>
+
+
+	<update id="updateCntUppder" parameterType="EventDTO">
+		UPDATE EVENT_INFO SET
+			READ_CNT=READ_CNT+1
+		WHERE ENT_SEQ=#{ent_seq}
+	</update>
+
+
+	<!-- 댓글 리스트 가져오기 -->
+	<select id="getEventComList" resultType="EventComDTO"
+		parameterType="EventComDTO">
+
+		SELECT
+			CE.ENT_SEQ,
+			CE.COM_SEQ,
+			CE.CONTENTS,
+			CE.USER_NO,
+			TO_CHAR(CE.REG_DT, 'YYYY.MM.DD hh24:mi:ss') AS REG_DT,
+			CE.REG_DT AS
+			ORD_REG_DT,
+			UI.USER_NAME
+		FROM COMMENT_EVENT CE, USER_INFO UI
+		WHERE
+			CE.USER_NO = UI.USER_NO
+			AND CE.ENT_SEQ = #{ent_seq}
+		ORDER BY ORD_REG_DT
+		DESC
+
+	</select>
+
+
+	<!-- (사업자)댓글 리스트 수 가져오기 -->
+	<select id="getEventComListCnt" resultType="EventComDTO"
+		parameterType="EventComDTO">
+		SELECT
+			COUNT(ENT_SEQ) AS CNT
+		FROM COMMENT_EVENT
+		WHERE
+		ENT_SEQ = #{ent_seq}
+	</select>
+
+
+	<!-- 댓글 과 게시판글 함께 삭제 -->
+	<delete id="deleteCommentInfo" parameterType="EventDTO">
+		DELETE FROM
+			COMMENT_EVENT
+		WHERE ENT_SEQ=#{ent_seq}
+	</delete>
+
+
+	<!--댓글 등록 -->
+	<insert id="createComment" parameterType="EventComDTO">
+		INSERT INTO
+		COMMENT_EVENT(
+			ENT_SEQ,
+			COM_SEQ,
+			CONTENTS,
+			USER_NO,
+			REG_USER_NO,
+			REG_DT
+		)
+		VALUES (
+			#{ent_seq},
+			(SELECT NVl(MAX(A.COM_SEQ), 0)+1 FROM COMMENT_EVENT
+			A WHERE A.ENT_SEQ =
+			#{ent_seq}),
+			#{contents},
+			#{reg_user_no},
+			#{reg_user_no},
+			SYSDATE
+		)
+	</insert>
+
+
+	<!-- 댓글 삭제 -->
+	<delete id="deleteComment" parameterType="EventComDTO">
+		DELETE FROM
+			COMMENT_EVENT
+		WHERE ENT_SEQ=#{ent_seq}
+		AND COM_SEQ=#{com_seq}
+	</delete>
+
+
+	<!-- 댓글 수정 -->
+	<update id="updateComment" parameterType="EventComDTO">
+		UPDATE COMMENT_EVENT
+		SET
+			USER_NO=#{user_no},
+			CONTENTS=#{contents},
+			CHG_USER_NO=#{user_no},
+			CHG_DT=SYSDATE
+		WHERE ENT_SEQ=#{ent_seq}
+			AND COM_SEQ=#{com_seq}
+	</update>
+
+	<!-- 댓글 번호 증가 -->
+	<update id="updatecomUppder" parameterType="EventComDTO">
+		UPDATE COMMENT_EVENT
+		SET
+			COM_SEQ=COM_SEQ+1
+		WHERE ENT_SEQ=#{ent_seq}
+
+	</update>
+
+
+	<!-- ############################################################################# 
+	# 사업자 쿼리 시작 # ############################################################################# -->
+
+
+	<!-- (사업자)게시판 리스트 가져오기 -->
+	<select id="getBusiList" resultType="EventDTO" parameterType="EventDTO">
+	   <![CDATA[   
+	   	 
+		SELECT *
+  FROM (
+        SELECT ROWNUM AS RNUM, 
+       	       PAGETABLE.*
+          FROM (
+                SELECT
+		                   MI.ENT_SEQ,
+                       (
+                        SELECT COUNT(CONTENTS)
+                          FROM COMMENT_EVENT C
+                         WHERE C.ENT_SEQ = MI.ENT_SEQ
+                         GROUP BY C.ENT_SEQ
+                       ) AS CNT,
+		                   MI.TITLE,
+		                   MI.READ_CNT,
+                       U.USER_NAME,
+		                   U.USER_NO,		    
+		                   MI.REG_DT,
+		                  (
+                       SELECT A.FILE_PATH ||'/'||
+		                          A.FILE_SAVE_NAME
+                         FROM FILE_INFO A
+                        WHERE A.FILE_GRP = MI.FILE_GRP
+                      ) AS FILE_NAME
+		              FROM EVENT_INFO MI, USER_INFO U
+		             WHERE MI.USER_NO = U.USER_NO
+		             ]]>
+		<if test="searchBox == 'TITLE' and searchText != ''"> AND TITLE LIKE '%' || #{searchText} || '%' </if>
+		<if test="searchBox == 'CONTENTS' and searchText != ''"> AND CONTENTS LIKE '%' || #{searchText} || '%' </if>
+		             
+		              <![CDATA[   
+		             ORDER BY MI.REG_DT DESC
+			         ) PAGETABLE
+         WHERE ROWNUM < #{end_page}
+       )
+ WHERE RNUM >= #{start_page}
+			   	       			       
+	 ]]>
+	</select>
+	
+	
+	<!-- (사업자)게시물 리스트 수 가져오기 -->
+	<select id="getBusiListCnt" resultType="EventDTO" parameterType="EventDTO">
+		SELECT
+		COUNT(ENT_SEQ) AS CNT
+		FROM EVENT_INFO
+		<if test="searchBox == 'TITLE' and searchText != ''"> WHERE TITLE LIKE '%' || #{searchText} || '%' </if>
+		<if test="searchBox == 'CONTENTS' and searchText != ''"> WHERE CONTENTS LIKE '%' || #{searchText} || '%' </if>
+	</select>
+
+
+	<!-- (사업자)댓글 리스트 가져오기 -->
+	<select id="getBusiCommentList" resultType="EventComDTO"
+		parameterType="EventComDTO">
+   <![CDATA[   
+   
+   SELECT *
+     FROM (
+           
+      SELECT 
+         ROWNUM AS RNUM, 
+         PAGETABLE.*
+         FROM (
+            SELECT
+               CE.ENT_SEQ,
+               CE.COM_SEQ,
+               CE.CONTENTS,
+               CE.USER_NO,
+               TO_CHAR(CE.REG_DT, 'YYYY.MM.DD hh24:mi:ss') AS REG_DT,
+               CE.REG_DT AS ORD_REG_DT,
+               UI.USER_NAME
+             FROM COMMENT_EVENT CE, USER_INFO UI
+            WHERE CE.USER_NO = UI.USER_NO
+              AND CE.ENT_SEQ = #{ent_seq}
+            ORDER BY ORD_REG_DT DESC
+            ) PAGETABLE
+         WHERE ROWNUM < #{end_page_size}
+      )
+   WHERE RNUM >= #{start_page_size}      
+   
+   ]]>
+
+	</select>
+
+
+	<!-- (사업자)댓글 리스트 수 가져오기 -->
+	<select id="getBusiCommentListCnt" resultType="EventComDTO"
+		parameterType="EventComDTO">
+		SELECT
+			COUNT(ENT_SEQ) AS CNT
+		FROM COMMENT_EVENT
+		WHERE
+		ENT_SEQ = #{ent_seq}
+	</select>
+
+	<!-- ############################################################################# 
+		# 사업자 쿼리 끝 # ############################################################################# -->
+
+</mapper>

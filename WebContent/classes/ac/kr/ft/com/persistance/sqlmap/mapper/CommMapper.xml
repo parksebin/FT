@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- JAVA와 연결할 Mapper 파일 설정 -->
+<mapper namespace="ac.kr.ft.com.persistance.mapper.CommMapper">
+	<select id="getTestList" resultType="EmpDTO">
+		SELECT EMPNO, ENAME, SAL, COMM FROM EMP
+	</select>
+	
+	<insert id="insertTest01" parameterType="EmpDTO">
+		INSERT INTO TEST01(SEQ) VALUES(#{ename})
+	</insert>
+	
+	<insert id="insertTest02" parameterType="EmpDTO">
+		INSERT INTO TEST03(SEQ) VALUES(#{ename})
+	</insert>
+		
+</mapper>

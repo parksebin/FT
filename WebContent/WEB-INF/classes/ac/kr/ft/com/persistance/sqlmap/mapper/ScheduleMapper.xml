@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ac.kr.ft.com.persistance.mapper.ScheduleMapper">
+
+<select id="getScheduleList" parameterType="ScheduleDTO" resultType="ScheduleDTO">
+	SELECT SCH_SEQ, TITLE, PL_DT1, PL_DT2 FROM SCHEDULE_INFO 
+		WHERE PL_DT1 BETWEEN #{startDate} and #{endDate} 
+			OR PL_DT2 BETWEEN #{startDate} and #{endDate}
+</select>
+
+<insert id="scheduleInsert" parameterType="ScheduleDTO">
+	INSERT INTO SCHEDULE_INFO (SCH_SEQ,TITLE,CONTENTS,PL_DT1,PL_DT2,REG_DT,REG_USER_NO) 
+		VALUES (SEQ_SCH_SEQ.NEXTVAL, #{title}, #{contents}, #{pl_dt1}, #{pl_dt2}, SYSDATE,#{reg_user_no})
+</insert>
+
+<select id="getScheduleDetail" parameterType="ScheduleDTO" resultType="ScheduleDTO">
+	SELECT SCH_SEQ, TITLE, PL_DT1, PL_DT2, CONTENTS, REG_DT FROM SCHEDULE_INFO
+		WHERE SCH_SEQ = #{sch_seq}
+</select>
+
+<delete id="scheduleDelete" parameterType="ScheduleDTO">
+	DELETE FROM SCHEDULE_INFO
+		WHERE SCH_SEQ = #{sch_seq}
+</delete>
+
+<update id="scheduleUpdateProc" parameterType="ScheduleDTO">
+		UPDATE SCHEDULE_INFO SET 
+			TITLE=#{title}, PL_DT1=#{pl_dt1}, PL_DT2=#{pl_dt2}, CONTENTS=#{contents}, CHG_DT=SYSDATE ,CHG_USER_NO=#{chg_user_no}
+			WHERE SCH_SEQ=#{sch_seq}
+</update>
+
+<!-- 모바일 전용! -->
+
+<select id="getScheduleDateList" parameterType="ScheduleDTO" resultType="ScheduleDTO">
+<![CDATA[
+	SELECT SCH_SEQ, TITLE, PL_DT1, PL_DT2 FROM SCHEDULE_INFO 
+		WHERE #{useDate} >= PL_DT1 AND #{useDate} <=PL_DT2
+		ORDER BY SCH_SEQ
+]]>
+</select>
+
+</mapper>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- JAVA와 연결할 Mapper 파일 설정 -->
+<mapper namespace="ac.kr.ft.com.persistance.mapper.CommonMapper">
+
+	<!-- 알림 정보 조회 -->
+	<select id="getNotiList" resultType="CommonDTO">
+		SELECT EMPNO, ENAME, SAL, COMM FROM EMP
+	</select>
+	
+	<insert id="insertNotiInfo" parameterType="CommonDTO">
+		INSERT INTO TEST01(SEQ) VALUES(#{ename})
+	</insert>
+		
+</mapper>

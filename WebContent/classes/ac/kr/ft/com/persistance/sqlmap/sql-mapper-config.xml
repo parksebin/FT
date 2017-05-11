@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+    <typeAliases>
+		<typeAlias type="ac.kr.ft.com.dto.AuthDTO" alias="AuthDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.CommonDTO" alias="CommonDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.CommunityDTO" alias="CommunityDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.EmpDTO" alias="EmpDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.FestivalDTO" alias="FestivalDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.MemberDTO" alias="MemberDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.MenuInfoDTO" alias="MenuInfoDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.OrderDTO" alias="OrderDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.RankDTO" alias="RankDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.ScheduleDTO" alias="ScheduleDTO"/>
+    </typeAliases>
+</configuration>

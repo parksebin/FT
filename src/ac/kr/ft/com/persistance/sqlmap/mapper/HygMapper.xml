@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- JAVA와 연결할 Mapper 파일 설정 -->
+<!-- 기존 CtrSqlMap과 같음 -->
+
+<mapper namespace="ac.kr.ft.com.persistance.mapper.HygMapper">
+	
+	<select id="getHYGList" resultType="HygDTO">
+	SELECT 
+		MI.HGN_SEQ,
+		MI.TITLE,
+		MI.CONTENTS,
+		(SELECT A.FILE_PATH ||'/'|| A.FILE_SAVE_NAME FROM FILE_INFO A WHERE A.FILE_GRP = MI.FILE_GRP) AS FILE_NAME,
+		MI.REG_USER_NO,
+		TO_CHAR(MI.REG_DT, 'YYYYMMDD'),
+		MI.CHG_USER_NO,
+		TO_CHAR(MI.CHG_DT, 'YYYYMMDD')	
+	FROM HYGIENIC_INFO MI ORDER BY REG_DT
+	</select> 
+	
+	<select resultType="HygDTO" id="getHYGDetail" parameterType="HygDTO">
+		SELECT 
+			MI.HGN_SEQ,
+			MI.TITLE,
+			MI.CONTENTS,
+	        (SELECT A.FILE_PATH ||'/'|| A.FILE_SAVE_NAME FROM FILE_INFO A WHERE A.FILE_GRP = MI.FILE_GRP) AS FILE_NAME,
+			MI.REG_USER_NO,
+			TO_CHAR(MI.REG_DT, 'YYYYMMDD'),
+			MI.CHG_USER_NO,
+			TO_CHAR(MI.CHG_DT, 'YYYYMMDD')	
+		FROM HYGIENIC_INFO MI
+		WHERE HGN_SEQ = #{hgn_seq}
+	</select>
+	
+	<insert id="createHYGInfo" parameterType="HygDTO"> 
+		INSERT INTO HYGIENIC_INFO(
+		 	 HGN_SEQ, 
+		 	 TITLE, 
+		 	 CONTENTS,
+		 	 FILE_GRP, 
+			 REG_USER_NO, REG_DT, CHG_USER_NO, CHG_DT) 
+		VALUES(SEQ_HGN_SEQ.nextval, #{title}, #{contents},
+			#{file_grp}, 
+			#{reg_user_no}, SYSDATE, #{chg_user_no}, SYSDATE) 
+	</insert>
+
+	
+	<update id="updateHYGInfo" parameterType="HygDTO">
+		 UPDATE HYGIENIC_INFO SET 
+			TITLE=#{title}, 
+			CONTENTS=#{contents}, 
+			REG_USER_NO=#{reg_user_no},
+			REG_DT=SYSDATE,
+			CHG_USER_NO=#{chg_user_no},
+			CHG_DT=SYSDATE,
+			FILE_GRP=#{file_grp}
+		 WHERE HGN_SEQ = #{hgn_seq} 
+	</update>
+
+	<delete id="deleteHYGInfo" parameterType="HygDTO">
+		 DELETE FROM HYGIENIC_INFO 
+		 WHERE HGN_SEQ = #{hgn_seq} 
+	</delete>
+
+	<!-- 체크된 항목 삭제 -->
+	<delete id="deleteAllCheckList" parameterType="HygDTO"> 
+		DELETE FROM HYGIENIC_INFO 
+		WHERE HGN_SEQ IN 
+		
+		<foreach item="chkMenu" index="index" collection="allCheckSeq"
+		      open="(" separator="," close=")">
+		        #{chkMenu}
+		</foreach>		
+		
+	</delete>
+
+
+</mapper>
+
+
+		

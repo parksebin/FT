@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- JAVA와 연결할 Mapper 파일 설정 -->
+<mapper namespace="ac.kr.ft.com.persistance.mapper.FileMapper">
+
+	<!-- 파일 업로드 리스트 가져오기 -->
+	<select id="getFileInfoList" resultType="FIleDTO">
+		SELECT 
+			FILE_GRP,       
+			FILE_SEQ,
+			FILE_ORG_NAME,
+			FILE_SAVE_NAME,
+			FILE_PATH,     
+			REG_DT,
+			REG_ID,
+			CHG_DT,
+			CHG_ID	
+		 FROM FILE_INFO
+		WHERE FILE_GRP = #{file_grp}
+	    ORDER BY FILE_GRP, FILE_SEQ
+	</select>
+	
+	<!-- 파일 업로드 정보 가져오기 -->
+	<select id="getFileInfo" resultType="FIleDTO">
+		SELECT 
+			FILE_GRP,       
+			FILE_SEQ,
+			FILE_ORG_NAME,
+			FILE_SAVE_NAME,
+			FILE_PATH,     
+			REG_DT,
+			REG_ID,
+			CHG_DT,
+			CHG_ID	
+		 FROM FILE_INFO
+		WHERE FILE_GRP = #{file_grp} 
+		  AND FILE_SEQ = #{file_seq}
+	</select>
+		
+	<!-- 파일 업로드 시퀀스 값 가져오기 -->
+	<select id="getFileInfoSeq" resultType="FIleDTO">
+		SELECT 
+			SEQ_FILE_INFO.NEXTVAL AS FILE_GRP      
+		 FROM DUAL
+	</select>	
+	
+	<!-- 파일 업로드 정보 등록하기 -->
+	<insert id="insertFileInfo" parameterType="FIleDTO">
+		INSERT INTO FILE_INFO(
+			FILE_GRP,       
+			FILE_SEQ,
+			FILE_ORG_NAME,
+			FILE_SAVE_NAME,
+			FILE_PATH,     
+			REG_DT,
+			REG_ID,
+			CHG_DT,
+			CHG_ID			
+		) VALUES(
+			#{file_grp},
+			(SELECT NVL(MAX(A.FILE_SEQ), 0) +1 FROM FILE_INFO A WHERE A.FILE_GRP = #{file_grp}),
+			#{file_org_name},
+			#{file_save_name},
+			#{file_path},    
+			SYSDATE,
+			#{reg_id},
+			SYSDATE,
+			#{reg_id}
+		)
+	</insert>
+	
+	<!-- 파일 업로드 정보 삭제하기(그룹으로 삭제) -->
+	<delete id="DeleteFileInfoALL" parameterType="FIleDTO">
+		DELETE FROM FILE_INFO WHERE FILE_GRP = #{file_grp}
+	</delete>
+	
+	<!-- 파일 업로드 정보 삭제하기(단일) -->
+	<delete id="DeleteFileInfo" parameterType="FIleDTO">
+		DELETE FROM FILE_INFO WHERE FILE_GRP = #{file_grp} AND FILE_SEQ = #{file_seq}
+	</delete>	
+		
+</mapper>

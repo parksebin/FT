@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ac.kr.ft.com.persistance.mapper.CommunityMapper">
+
+	<select id="getCommunityList" resultType="CommunityDTO">
+		SELECT
+			MI.CMT_SEQ,
+			MI.TITLE,
+			MI.READ_CNT,
+			U.USER_NAME,
+			MI.REG_DT,
+			MI.CHG_DT,
+			(SELECT A.FILE_PATH
+			||'/'||
+			A.FILE_SAVE_NAME FROM FILE_INFO A WHERE
+			A.FILE_GRP = 
+			MI.FILE_GRP) AS
+			FILE_NAME
+		FROM COMMUNITY_INFO MI, USER_INFO U
+		WHERE 
+			MI.USER_NO = U.USER_NO
+		ORDER BY 
+		MI.REG_DT DESC
+	</select>
+
+	<select id="getCommunityDetail" resultType="CommunityDTO" parameterType="CommunityDTO">
+		SELECT
+			MI.CMT_SEQ,
+			MI.TITLE,
+			MI.CONTENTS,
+			MI.READ_CNT,
+			U.USER_NAME,
+			U.USER_NO,
+			MI.REG_USER_NO,
+			MI.REG_DT,
+			MI.CHG_USER_NO,
+			MI.CHG_DT,
+			(SELECT A.FILE_PATH ||'/'||
+			A.FILE_SAVE_NAME FROM FILE_INFO A WHERE
+			A.FILE_GRP = MI.FILE_GRP)
+		    AS FILE_NAME
+		FROM COMMUNITY_INFO MI, USER_INFO U
+		WHERE
+			MI.USER_NO = U.USER_NO
+			AND CMT_SEQ = #{cmt_seq}
+
+	</select>
+
+	<insert id="createCommunityInfo" parameterType="CommunityDTO">
+		INSERT INTO 
+		COMMUNITY_INFO(
+			CMT_SEQ,
+			TITLE,
+			CONTENTS,
+			READ_CNT,
+			USER_NO,
+			REG_USER_NO,
+			REG_DT,
+			FILE_GRP
+		)
+		VALUES(
+			SEQ_CMT_SEQ.NEXTVAL,
+			#{title},
+			#{contents},
+			0,
+			#{reg_user_no},
+			#{reg_user_no},
+			SYSDATE,
+			#{file_grp}
+		)
+
+	</insert>
+
+	<delete id="deleteAllCheckList" parameterType="CommunityDTO">
+		DELETE FROM COMMUNITY_INFO
+		WHERE CMT_SEQ IN
+		<foreach close=")" separator="," open="(" collection="allCheckSeq"
+			index="index" item="item"> #{item}
+		</foreach>
+
+	</delete>
+
+	<delete id="deleteAllCheckListComment" parameterType="CommunityDTO">
+		DELETE FROM COMMENT_COMMUNITY
+		WHERE CMT_SEQ IN
+		<foreach close=")" separator="," open="(" collection="allCheckSeq"
+			index="index" item="item"> #{item}
+		</foreach>
+
+	</delete>
+
+	<delete id="deleteCommunityInfo" parameterType="CommunityDTO">
+		DELETE FROM
+		COMMUNITY_INFO
+		WHERE CMT_SEQ = #{cmt_seq}
+	</delete>
+
+
+	<update id="updateCommunityInfo" parameterType="CommunityDTO">
+		UPDATE COMMUNITY_INFO SET
+			TITLE=#{title},
+			CONTENTS=#{contents},
+			READ_CNT=READ_CNT+1,
+			CHG_USER_NO=#{chg_user_no},
+			CHG_DT=SYSDATE,
+			FILE_GRP=#{file_grp}
+		WHERE
+		CMT_SEQ =#{cmt_seq}
+	</update>
+
+
+	<update id="updateCntUppder" parameterType="CommunityDTO">
+		UPDATE COMMUNITY_INFO SET
+		READ_CNT=READ_CNT+1
+		WHERE CMT_SEQ=#{cmt_seq}
+	</update>
+
+
+	<!-- 댓글 리스트 가져오기 -->
+	<select id="getCommunityComList" resultType="CommunityComDTO" parameterType="CommunityComDTO">
+		
+		SELECT
+			CE.CMT_SEQ,
+			CE.COM_SEQ,
+			CE.CONTENTS,
+			CE.USER_NO,
+			TO_CHAR(CE.REG_DT, 'YYYY.MM.DD  hh24:mi:ss') AS REG_DT,
+			CE.REG_DT AS ORD_REG_DT,
+			UI.USER_NAME
+		FROM COMMENT_COMMUNITY CE, USER_INFO UI
+		WHERE CE.USER_NO = UI.USER_NO
+		  AND CE.CMT_SEQ = #{cmt_seq}
+		ORDER BY ORD_REG_DT DESC
+	
+	</select>
+
+
+	<!-- (사업자)댓글 리스트 수 가져오기 -->
+	<select id="getCommunityComListCnt" resultType="CommunityComDTO" parameterType="CommunityComDTO">
+		SELECT
+			COUNT(CMT_SEQ) AS CNT
+		 FROM COMMENT_COMMUNITY
+		WHERE CMT_SEQ = #{cmt_seq}
+	</select>
+
+
+	<!-- 댓글 과 게시판글 함께 삭제 -->
+	<delete id="deleteCommentInfo" parameterType="CommunityDTO">
+		DELETE FROM
+		COMMENT_COMMUNITY
+		WHERE CMT_SEQ=#{cmt_seq}
+	</delete>
+
+
+	<!--댓글 등록 -->
+	<insert id="createComment" parameterType="CommunityComDTO">
+		INSERT INTO 
+		COMMENT_COMMUNITY(
+			CMT_SEQ,
+			COM_SEQ,
+			CONTENTS,
+			USER_NO,
+			REG_USER_NO,
+			REG_DT
+		)
+		VALUES (
+			#{cmt_seq},
+			(SELECT NVl(MAX(A.COM_SEQ), 0)+1 FROM COMMENT_COMMUNITY A WHERE A.CMT_SEQ = #{cmt_seq}),
+			#{contents},
+			#{reg_user_no},
+			#{reg_user_no},
+			SYSDATE
+		)
+	</insert>
+
+
+	<!-- 댓글 삭제 -->
+	<delete id="deleteComment" parameterType="CommunityComDTO">
+		DELETE FROM
+			COMMENT_COMMUNITY
+		WHERE CMT_SEQ=#{cmt_seq}
+		AND COM_SEQ=#{com_seq}
+	</delete>
+
+
+	<!-- 댓글 수정 -->
+	<update id="updateComment" parameterType="CommunityComDTO">
+		UPDATE COMMENT_COMMUNITY
+		SET
+			USER_NO=#{user_no},
+			CONTENTS=#{contents},
+			CHG_USER_NO=#{user_no},
+			CHG_DT=SYSDATE
+		WHERE CMT_SEQ=#{cmt_seq}
+		AND COM_SEQ=#{com_seq}
+	</update>
+
+	<!-- 댓글 번호 증가 -->
+	<update id="updatecomUppder" parameterType="CommunityComDTO">
+		UPDATE COMMENT_COMMUNITY
+		SET
+			COM_SEQ=COM_SEQ+1
+		WHERE CMT_SEQ=#{cmt_seq}
+
+	</update>
+
+	
+	<!-- 
+	#############################################################################
+	#							사업자 쿼리 시작									#
+	#############################################################################
+	 -->
+     
+     
+     <!-- (사업자)게시판 리스트 가져오기 -->
+	<select id="getBusiList" resultType="CommunityDTO" parameterType="CommunityDTO">
+	   <![CDATA[   
+	   	 
+		SELECT *
+  FROM (
+        SELECT ROWNUM AS RNUM, 
+       	       PAGETABLE.*
+          FROM (
+                SELECT
+		                   MI.CMT_SEQ,
+                       (
+                        SELECT COUNT(CONTENTS)
+                          FROM COMMENT_COMMUNITY C
+                         WHERE C.CMT_SEQ = MI.CMT_SEQ
+                         GROUP BY C.CMT_SEQ
+                       ) AS CNT,
+		                   MI.TITLE,
+		                   MI.READ_CNT,
+                       U.USER_NAME,
+		                   U.USER_NO,		    
+		                   MI.REG_DT,
+		                  (
+                       SELECT A.FILE_PATH ||'/'||
+		                          A.FILE_SAVE_NAME
+                         FROM FILE_INFO A
+                        WHERE A.FILE_GRP = MI.FILE_GRP
+                      ) AS FILE_NAME
+		              FROM COMMUNITY_INFO MI, USER_INFO U
+		             WHERE MI.USER_NO = U.USER_NO
+		                ]]>
+		<if test="searchBox == 'TITLE' and searchText != ''"> AND TITLE LIKE '%' || #{searchText} || '%' </if>
+		<if test="searchBox == 'CONTENTS' and searchText != ''"> AND CONTENTS LIKE '%' || #{searchText} || '%' </if>
+		             
+		              <![CDATA[   
+		             ORDER BY MI.REG_DT DESC
+			         ) PAGETABLE
+         WHERE ROWNUM < #{end_page}
+       )
+ WHERE RNUM >= #{start_page}
+			   	       			       
+	 ]]>
+		
+		</select>
+	
+	
+	
+	<!-- (사업자)게시물 리스트 수 가져오기 -->
+	
+	
+	<select id="getBusiListCnt" resultType="CommunityDTO" parameterType="CommunityDTO">
+		SELECT
+			COUNT(CMT_SEQ) AS CNT
+		FROM COMMUNITY_INFO
+        		<if test="searchBox == 'TITLE' and searchText != ''"> WHERE TITLE LIKE '%' || #{searchText} || '%' </if>
+		<if test="searchBox == 'CONTENTS' and searchText != ''"> WHERE CONTENTS LIKE '%' || #{searchText} || '%' </if>	
+	</select>
+
+
+   <!-- (사업자)댓글 리스트 가져오기 -->
+   <select id="getBusiCommentList" resultType="CommunityComDTO" parameterType="CommunityComDTO">
+   <![CDATA[   
+   
+   SELECT *
+     FROM (
+           
+      SELECT 
+         ROWNUM AS RNUM, 
+         PAGETABLE.*
+         FROM (
+            SELECT
+               CE.CMT_SEQ,
+               CE.COM_SEQ,
+               CE.CONTENTS,
+               CE.USER_NO,
+               TO_CHAR(CE.REG_DT, 'YYYY.MM.DD hh24:mi:ss') AS REG_DT,
+               CE.REG_DT AS ORD_REG_DT,
+               UI.USER_NAME
+             FROM COMMENT_COMMUNITY CE, USER_INFO UI
+            WHERE CE.USER_NO = UI.USER_NO
+              AND CE.CMT_SEQ = #{cmt_seq}
+            ORDER BY ORD_REG_DT DESC
+            ) PAGETABLE
+         WHERE ROWNUM < #{end_page_size}
+      )
+   WHERE RNUM >= #{start_page_size}      
+   
+   ]]>
+   </select>
+
+	<!-- (사업자)댓글 리스트 수 가져오기 -->
+	<select id="getBusiCommentListCnt" resultType="CommunityComDTO" parameterType="CommunityComDTO">
+		SELECT
+			COUNT(CMT_SEQ) AS CNT
+		 FROM COMMENT_COMMUNITY
+		WHERE CMT_SEQ = #{cmt_seq}
+	</select>
+
+	<!-- 
+	#############################################################################
+	#							사업자 쿼리 끝										#
+	#############################################################################
+	 -->
+
+</mapper>

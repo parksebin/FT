@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- JAVA와 연결할 Mapper 파일 설정 -->
+<!-- 기존 CtrSqlMap과 같음 -->
+
+<mapper namespace="ac.kr.ft.com.persistance.mapper.RankMapper">
+	
+<select id="getRankList" resultType="FestivalDTO" parameterType="FestivalDTO">
+
+SELECT
+FST_SEQ,
+#{calender} AS CALENDER,
+CITY,
+LOCAL,
+ATTRACTIONS,
+(CASE WHEN #{calender, jdbcType=VARCHAR} = 'jan' THEN JAN 
+WHEN #{calender} = 'feb' THEN FEB 
+WHEN #{calender} = 'mar' THEN MAR 
+WHEN #{calender} = 'apr' THEN APR 
+WHEN #{calender} = 'may' THEN MAY
+WHEN #{calender} = 'jun' THEN JUN 
+WHEN #{calender} = 'jul' THEN JUL 
+WHEN #{calender} = 'aug' THEN AUG 
+WHEN #{calender} = 'sep' THEN SEP 
+WHEN #{calender} = 'oct' THEN OCT 
+WHEN #{calender} = 'nov' THEN NOV 
+WHEN #{calender} = 'dec' THEN DEC
+ END) AS CNTT,
+ NATION,
+ PAY
+FROM FESTIVAL_INFO
+WHERE CITY = GET_COMMON_CD_NM(#{city})
+	<if test="local != null">
+  	AND LOCAL = GET_COMMON_CD_NM(#{local}) 
+	</if>
+  	AND NATION = GET_COMMON_CD_NM(#{nation}) 
+  	<if test="pay != null">  
+  	AND PAY = GET_COMMON_CD_NM(#{pay})
+  	</if>
+ORDER BY TO_NUMBER(CNTT) DESC
+
+
+
+</select>
+
+<!-- ##############################################################################################
+											관리자끝
+	################################################################################################-->
+	
+	
+	
+<!-- ##############################################################################################
+											사업자 시작
+	################################################################################################-->
+	
+	
+	
+							<!-- 랭크 리스트 조회  하기 -->
+<select id="getBusiRankList" resultType="FestivalDTO" parameterType="FestivalDTO">
+
+SELECT * FROM ( 
+	SELECT ROWNUM AS RNUM, PAGETABLE.* FROM 
+		( 
+SELECT 
+FST_SEQ,
+#{calender} AS CALENDER,
+CITY,
+LOCAL,
+ATTRACTIONS,
+(CASE WHEN #{calender, jdbcType=VARCHAR} = 'jan' THEN JAN 
+WHEN #{calender} = 'feb' THEN FEB 
+WHEN #{calender} = 'mar' THEN MAR 
+WHEN #{calender} = 'apr' THEN APR 
+WHEN #{calender} = 'may' THEN MAY
+WHEN #{calender} = 'jun' THEN JUN 
+WHEN #{calender} = 'jul' THEN JUL 
+WHEN #{calender} = 'aug' THEN AUG 
+WHEN #{calender} = 'sep' THEN SEP 
+WHEN #{calender} = 'oct' THEN OCT 
+WHEN #{calender} = 'nov' THEN NOV 
+WHEN #{calender} = 'dec' THEN DEC
+END) AS CNTT,
+NATION,
+PAY
+FROM FESTIVAL_INFO 
+WHERE CITY = GET_COMMON_CD_NM(#{city})
+	<if test="local != null">
+  	AND LOCAL = GET_COMMON_CD_NM(#{local}) 
+	</if>
+  	AND NATION = GET_COMMON_CD_NM(#{nation}) 
+  	<if test="pay != null">  
+  	AND PAY = GET_COMMON_CD_NM(#{pay})
+  	</if>
+ORDER BY TO_NUMBER(CNTT) DESC ) 
+<![CDATA[
+
+PAGETABLE WHERE ROWNUM < #{end_page} ) WHERE RNUM >= #{start_page} 
+  ]]>
+
+</select>
+
+							<!-- (사업자)랭크 리스트 조회 수 가져오기 -->
+
+
+<select resultType="FestivalDTO" id="getBusiRankListCnt" parameterType="FestivalDTO">
+ SELECT COUNT(ATTRACTIONS) AS CNT FROM FESTIVAL_INFO 
+ WHERE CITY = GET_COMMON_CD_NM(#{city})
+	<if test="local != null">
+  	AND LOCAL = GET_COMMON_CD_NM(#{local}) 
+	</if>
+  	AND NATION = GET_COMMON_CD_NM(#{nation}) 
+  	<if test="pay != null">  
+  	AND PAY = GET_COMMON_CD_NM(#{pay})
+  	</if>
+</select>
+
+
+</mapper>
+
+
+		

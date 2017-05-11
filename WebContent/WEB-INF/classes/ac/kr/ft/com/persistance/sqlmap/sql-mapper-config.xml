@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+    <typeAliases>
+		<typeAlias type="ac.kr.ft.com.dto.ComDTO" alias="ComDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.CommunityDTO" alias="CommunityDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.CtrDTO" alias="CtrDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.EmpDTO" alias="EmpDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.EventDTO" alias="EventDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.FestivalDTO" alias="FestivalDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.FileDTO" alias="FileDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.HygDTO" alias="HygDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.MenuInfoDTO" alias="MenuInfoDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.NoticeDTO" alias="NoticeDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.OrderDTO" alias="OrderDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.RankDTO" alias="RankDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.ScheduleDTO" alias="ScheduleDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.UserDTO" alias="UserDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.EventComDTO" alias="EventComDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.PositionDTO" alias="PositionDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.MenuComDTO" alias="MenuComDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.NoticeComDTO" alias="NoticeComDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.CommunityComDTO" alias="CommunityComDTO"/>
+		<typeAlias type="ac.kr.ft.com.dto.VisitorDTO" alias="VisitorDTO"/>
+		<typeAlias alias="SalesDTO" type="ac.kr.ft.com.dto.SalesDTO"/>
+    </typeAliases>
+</configuration>
