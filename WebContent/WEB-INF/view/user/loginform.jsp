@@ -86,7 +86,7 @@
 						<h3 class="panel-title">로그인해주세요</h3>
 					</div>
 					<div class="panel-body">
-						<form name="f" id="f" action="/user/loginproc.do" method="post">
+						<form name="f" id="f" action="/user/loginproc.do" method="post"><!--submit이 눌리면 loginproc.do 컨트롤로 날라간다. -->
 							<fieldset>
 								<div class="form-group">
 									<input class="form-control" placeholder="아이디" name="user_id"
